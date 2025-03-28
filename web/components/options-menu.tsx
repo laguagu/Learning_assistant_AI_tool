@@ -49,26 +49,6 @@ async function updateAgentSettings(
   }
 }
 
-// API function to reset agent settings
-async function resetAgentSettings(userId: string) {
-  try {
-    const response = await fetch(
-      `${API_URL}/api/reset-agent-settings?user_id=${userId}`,
-      {
-        cache: "no-store",
-      }
-    );
-    if (!response.ok) {
-      throw new Error(`Failed to reset settings: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error resetting agent settings:", error);
-    throw error;
-  }
-}
-
 interface OptionsMenuProps {
   userId: string;
   onResetChat?: () => void; // We'll keep this prop for compatibility, but won't use it
