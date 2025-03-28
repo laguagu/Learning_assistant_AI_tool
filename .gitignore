@@ -1,0 +1,14 @@
+*.pptx
+/.idea
+.env
+/temp
+/temp
+/templates
+/.gradio
+__pycache__/
+*.py[cod]
+*$py.class
+# Python virtual environment
+myenv/
+venv/
+env/

@@ -1,0 +1,40 @@
+# Python specific
+UPBEAT_learning_assistant_GUI.py
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.myenv/
+myenv/
+venv/
+env/
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# Environment variables and secrets
+.env
+.env.*
+
+# Development and build artifacts
+.idea/
+.vscode/
+temp/
+.gradio/
+*.pptx
+*.pem
+*.log
+
+# Other unnecessary files
+README.md
+LICENSE
+Dockerfile
+.dockerignore
+UPBEAT_learning_assistant_GUI.py
+
+# Web directory
+web/*
+

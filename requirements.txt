@@ -1,0 +1,15 @@
+numpy
+pandas
+pillow
+python-dotenv
+openai
+litellm
+markdown2
+xhtml2pdf
+gradio
+langchain-openai
+langgraph
+langchain-community
+fastapi
+uvicorn
+python-multipart
