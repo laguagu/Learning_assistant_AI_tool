@@ -10,8 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
-import { GraduationCap, Plus as PlusIcon } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import { ExternalLink, GraduationCap, Plus as PlusIcon } from "lucide-react";
+import ReactMarkdown, { Components } from "react-markdown";
 
 interface MarkdownPlanViewerProps {
   markdown: string;
@@ -52,12 +52,25 @@ export function MarkdownPlanViewer({
     );
   }
 
+  // Preprocess the markdown to replace <br> tags with proper Markdown line breaks
+  let processedMarkdown = markdown.replace(/<br>/g, "  \n");
+
+  // Convert plain URLs to Markdown links
+  // This regex finds URLs starting with http:// or https:// that aren't already part of a Markdown link
+  processedMarkdown = processedMarkdown.replace(
+    /(?<!!)\[(https?:\/\/[^\s\]]+)\]|\b(https?:\/\/[^\s]+)\b/g,
+    (match, p1, p2) => {
+      const url = p1 || p2;
+      return `[${url}](${url})`;
+    }
+  );
+
   // Extract title and introduction
-  const titleMatch = markdown.match(/^# (.+?)(?:\n|$)/);
+  const titleMatch = processedMarkdown.match(/^# (.+?)(?:\n|$)/);
   const title = titleMatch ? titleMatch[1] : "Learning Plan";
 
   // Find introduction - text between the title and first section heading
-  const introMatch = markdown.match(
+  const introMatch = processedMarkdown.match(
     /^# .+?\n\n(.*?)(?=\n## |\n# |\n\n## |\n\n# |$)/s
   );
   const introduction = introMatch ? introMatch[1] : "";
@@ -71,7 +84,7 @@ export function MarkdownPlanViewer({
   let match;
 
   // Extract all sections with their content
-  while ((match = sectionRegex.exec(markdown)) !== null) {
+  while ((match = sectionRegex.exec(processedMarkdown)) !== null) {
     sections.push({
       title: match[1].trim(),
       content: match[2].trim(),
@@ -83,14 +96,44 @@ export function MarkdownPlanViewer({
   let conclusion = "";
   if (sections.length > 0) {
     const lastSectionEnd = sectionRegex.lastIndex;
-    if (lastSectionEnd < markdown.length) {
-      const remainingText = markdown.substring(lastSectionEnd).trim();
+    if (lastSectionEnd < processedMarkdown.length) {
+      const remainingText = processedMarkdown.substring(lastSectionEnd).trim();
       // Only include text that doesn't start with a heading
       if (remainingText && !remainingText.startsWith("#")) {
         conclusion = remainingText;
       }
     }
   }
+
+  // Custom components for ReactMarkdown
+  const components: Components = {
+    a: ({ node, children, ...props }) => (
+      <a
+        {...props}
+        className="text-blue-500 hover:text-blue-700 inline-flex items-center gap-1 transition-colors font-medium"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {children}
+        <ExternalLink className="h-3.5 w-3.5 inline" />
+      </a>
+    ),
+    ul: ({ node, children, ...props }) => (
+      <ul {...props} className="list-disc pl-5 my-3 space-y-1">
+        {children}
+      </ul>
+    ),
+    ol: ({ node, children, ...props }) => (
+      <ol {...props} className="list-decimal pl-5 my-3 space-y-1">
+        {children}
+      </ol>
+    ),
+    li: ({ node, children, ...props }) => (
+      <li {...props} className="ml-2">
+        {children}
+      </li>
+    ),
+  };
 
   return (
     <Card className="w-full">
@@ -101,7 +144,9 @@ export function MarkdownPlanViewer({
           </CardTitle>
           {introduction && (
             <div className="text-base text-muted-foreground mt-2 prose prose-sm max-w-none">
-              <ReactMarkdown>{introduction}</ReactMarkdown>
+              <ReactMarkdown components={components}>
+                {introduction}
+              </ReactMarkdown>
             </div>
           )}
         </div>
@@ -129,13 +174,10 @@ export function MarkdownPlanViewer({
                 </AccordionPrimitive.Trigger>
               </AccordionPrimitive.Header>
               <AccordionContent className="pt-2 pb-4 px-3">
-                <div
-                  className="prose prose-headings:font-bold prose-headings:text-primary prose-h3:text-lg 
-                             prose-h4:text-base prose-p:text-base prose-p:leading-relaxed 
-                             prose-li:text-base prose-li:leading-relaxed prose-a:text-blue-600
-                             max-w-none"
-                >
-                  <ReactMarkdown>{section.content}</ReactMarkdown>
+                <div className="max-w-none">
+                  <ReactMarkdown components={components}>
+                    {section.content}
+                  </ReactMarkdown>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -145,8 +187,10 @@ export function MarkdownPlanViewer({
         {conclusion && (
           <>
             <Separator className="my-6" />
-            <div className="pt-2 prose prose-sm prose-p:text-muted-foreground max-w-none">
-              <ReactMarkdown>{conclusion}</ReactMarkdown>
+            <div className="pt-2 max-w-none">
+              <ReactMarkdown components={components}>
+                {conclusion}
+              </ReactMarkdown>
             </div>
           </>
         )}
