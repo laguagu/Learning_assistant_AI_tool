@@ -706,26 +706,52 @@ async def update_agent_settings(request: AgentSettingsRequest):
     return {"success": success}
 
 @app.get("/api/reset-agent-settings")
-async def reset_agent_settings(user_id: str):
-    """Resets agent settings to defaults for a user"""
+async def reset_agent_settings(user_id: str, reset: bool = False):
+    """Resets agent settings to defaults for a user if reset=True, otherwise returns current settings"""
     if user_id not in user_datasets:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
     
-    # First try to load settings from disk
-    disk_settings = load_agent_settings(user_id)
-    
-    if disk_settings:
-        # Use settings from disk if available
-        create_agent_for_user(user_id, disk_settings)
+    if reset:
+        # If reset=True, use default settings
+        default_settings = {
+            'system_prompt': user_datasets[user_id]['assistant_prompt'].strip(),
+            'temperature': 0.3,
+            'use_plan_tool': True,
+            'use_search_tool': True, 
+            'use_learningmaterial_tool': True,
+            'use_milestones_tool': True
+        }
+        
+        # Update agent with default settings
+        create_agent_for_user(user_id, default_settings)
+        
+        # Save default settings to disk
+        save_agent_settings(user_id, default_settings)
+        
+        # Return default settings
+        return {
+            "success": True,
+            "settings": default_settings
+        }
     else:
-        # Reset to default settings by creating agent with default settings
-        create_agent_for_user(user_id)
-    
-    # Return current settings
-    return {
-        "success": True,
-        "settings": user_agents[user_id]['settings']
-    }
+        # First try to load settings from disk
+        disk_settings = load_agent_settings(user_id)
+        
+        if disk_settings:
+            # Use settings from disk if available
+            if user_id not in user_agents:
+                create_agent_for_user(user_id, disk_settings)
+            return {
+                "success": True,
+                "settings": disk_settings
+            }
+        else:
+            # If no settings on disk, create with default settings
+            create_agent_for_user(user_id)
+            return {
+                "success": True,
+                "settings": user_agents[user_id]['settings']
+            }
 
 @app.get("/api/download-pdf/{user_id}/{phase}")
 async def download_pdf(user_id: str, phase: int, background_tasks: BackgroundTasks):

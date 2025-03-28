@@ -92,9 +92,17 @@ export function OptionsMenu({ userId }: OptionsMenuProps) {
       try {
         setLoading(true);
         // Get the current settings
-        const result = await resetAgentSettings(userId);
-        if (result.success && result.settings) {
-          const settings = result.settings;
+        const result = await fetch(
+          `${API_URL}/api/reset-agent-settings?user_id=${userId}&reset=false`
+        );
+
+        if (!result.ok) {
+          throw new Error(`Failed to load settings: ${result.status}`);
+        }
+
+        const data = await result.json();
+        if (data.success && data.settings) {
+          const settings = data.settings;
           setSystemPrompt(settings.system_prompt || "");
           setTemperature(settings.temperature || 0.3);
           setUsePlanTool(!!settings.use_plan_tool);
@@ -138,9 +146,17 @@ export function OptionsMenu({ userId }: OptionsMenuProps) {
   const handleResetSettings = async () => {
     try {
       setLoading(true);
-      const result = await resetAgentSettings(userId);
-      if (result.success && result.settings) {
-        const settings = result.settings;
+      // Add reset=true parameter to reset to defaults
+      const result = await fetch(
+        `${API_URL}/api/reset-agent-settings?user_id=${userId}&reset=true`
+      );
+      if (!result.ok) {
+        throw new Error(`Failed to reset settings: ${result.status}`);
+      }
+
+      const data = await result.json();
+      if (data.success && data.settings) {
+        const settings = data.settings;
         setSystemPrompt(settings.system_prompt || "");
         setTemperature(settings.temperature || 0.3);
         setUsePlanTool(!!settings.use_plan_tool);
