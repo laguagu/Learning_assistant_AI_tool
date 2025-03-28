@@ -382,16 +382,21 @@ def create_agent_for_user(user_id, settings=None):
     if user_id not in user_datasets:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
     
-    # Initialize default settings if not provided
+    # Try to load settings from disk if not provided
     if settings is None:
-        settings = {
-            'system_prompt': user_datasets[user_id]['assistant_prompt'].strip(),
-            'temperature': 0.3,
-            'use_plan_tool': True,
-            'use_search_tool': True, 
-            'use_learningmaterial_tool': True,
-            'use_milestones_tool': True
-        }
+        disk_settings = load_agent_settings(user_id)
+        if disk_settings:
+            settings = disk_settings
+        else:
+            # Initialize default settings if not provided and not found on disk
+            settings = {
+                'system_prompt': user_datasets[user_id]['assistant_prompt'].strip(),
+                'temperature': 0.3,
+                'use_plan_tool': True,
+                'use_search_tool': True, 
+                'use_learningmaterial_tool': True,
+                'use_milestones_tool': True
+            }
     
     # Initialize user_agents for this user if not existing
     if user_id not in user_agents:
@@ -634,6 +639,51 @@ async def update_milestones(request: UpdateMilestonesRequest):
     success = save_user_state(request.user_id, state)
     return {"success": success}
 
+def save_agent_settings(user_id, settings):
+    """Saves agent settings to disk"""
+    user_dir = os.path.join('user_data', user_id)
+    
+    if not os.path.exists(user_dir):
+        os.makedirs(user_dir, exist_ok=True)
+        
+    settings_file = os.path.join(user_dir, 'agent_settings.pickle')
+    temp_file = os.path.join(user_dir, 'agent_settings.temp.pickle')
+    
+    try:
+        with open(temp_file, 'wb') as f:
+            pickle.dump(settings, f)
+            f.flush()
+            os.fsync(f.fileno())
+        
+        # Rename for atomic write
+        if os.path.exists(settings_file) and os.name == 'nt':
+            os.remove(settings_file)
+            
+        os.rename(temp_file, settings_file)
+        return True
+    except Exception as e:
+        print(f"Error saving agent settings: {e}")
+        if os.path.exists(temp_file):
+            try:
+                os.remove(temp_file)
+            except:
+                pass
+        return False
+
+def load_agent_settings(user_id):
+    """Loads agent settings from disk"""
+    user_dir = os.path.join('user_data', user_id)
+    settings_file = os.path.join(user_dir, 'agent_settings.pickle')
+    
+    if os.path.exists(settings_file):
+        try:
+            with open(settings_file, 'rb') as f:
+                return pickle.load(f)
+        except Exception as e:
+            print(f"Error loading agent settings: {e}")
+    
+    return None
+   
 @app.post("/api/update-agent-settings")
 async def update_agent_settings(request: AgentSettingsRequest):
     """Updates agent settings for a user"""
@@ -649,11 +699,11 @@ async def update_agent_settings(request: AgentSettingsRequest):
         'use_learningmaterial_tool': request.use_learningmaterial_tool,
         'use_milestones_tool': request.use_milestones_tool
     }
-    
+    success = save_agent_settings(request.user_id, settings)
     # Update agent
     create_agent_for_user(request.user_id, settings)
     
-    return {"success": True}
+    return {"success": success}
 
 @app.get("/api/reset-agent-settings")
 async def reset_agent_settings(user_id: str):
@@ -661,8 +711,15 @@ async def reset_agent_settings(user_id: str):
     if user_id not in user_datasets:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
     
-    # Reset to default settings by creating agent with default settings
-    create_agent_for_user(user_id)
+    # First try to load settings from disk
+    disk_settings = load_agent_settings(user_id)
+    
+    if disk_settings:
+        # Use settings from disk if available
+        create_agent_for_user(user_id, disk_settings)
+    else:
+        # Reset to default settings by creating agent with default settings
+        create_agent_for_user(user_id)
     
     # Return current settings
     return {

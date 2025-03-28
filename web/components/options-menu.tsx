@@ -53,9 +53,11 @@ async function updateAgentSettings(
 async function resetAgentSettings(userId: string) {
   try {
     const response = await fetch(
-      `${API_URL}/api/reset-agent-settings?user_id=${userId}`
+      `${API_URL}/api/reset-agent-settings?user_id=${userId}`,
+      {
+        cache: "no-store",
+      }
     );
-
     if (!response.ok) {
       throw new Error(`Failed to reset settings: ${response.status}`);
     }
