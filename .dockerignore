@@ -27,6 +27,7 @@ temp/
 *.pptx
 *.pem
 *.log
+*.png
 
 # Other unnecessary files
 README.md

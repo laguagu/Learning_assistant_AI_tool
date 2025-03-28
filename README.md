@@ -7,3 +7,9 @@ Note that any student data shown here is not real, but artificial data created f
 ## Application Setup and Installation
 
 See the [SETUP.md](./SETUP.md) file for instructions on how to install and run the application locally.
+
+Some screenshots of the GUI:
+
+![Screenshot 1](pic-1.png)
+
+![Screenshot 2](pic-2.png)
