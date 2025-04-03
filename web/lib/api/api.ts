@@ -1,7 +1,7 @@
 // lib/api.ts - Single API file for both client and server
+import { downloadPdfAction } from "@/app/actions";
 import { StructuredLearningPlan, UserData } from "../types";
 import { API_URL } from "./config";
-import { downloadPdfAction } from "@/app/actions";
 
 /**
  * Fetches a list of all users with NO caching to ensure fresh data
@@ -95,23 +95,6 @@ export async function getStructuredLearningPlan(
       ? userData.smart_plan_phase1
       : userData.smart_plan_phase2;
   }
-}
-
-/**
- * Updates user milestones
- */
-export async function updateMilestones(
-  userId: string,
-  milestones: boolean[]
-): Promise<{ success: boolean }> {
-  const response = await fetch(`${API_URL}/api/update-milestones`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id: userId, milestones }),
-  });
-
-  if (!response.ok) throw new Error("Failed to update milestones");
-  return await response.json();
 }
 
 /**
