@@ -116,7 +116,6 @@ export function Chat({ userId, onReady }: ChatProps) {
     if (inputRef.current) {
       inputRef.current.focus();
     }
-    toast.success("Chat history cleared");
   };
 
   // Expose the resetChat method
