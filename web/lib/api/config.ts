@@ -4,8 +4,10 @@
 const isDevelopment = process.env.NODE_ENV === "development";
 const isServer = typeof window === "undefined";
 // Rahti detection needs to work both server and client side
-const isRahti = process.env.DEPLOYMENT_ENV === "rahti" || 
-                (typeof window !== 'undefined' && window.location.hostname.includes('rahtiapp.fi'));
+const isRahti =
+  process.env.DEPLOYMENT_ENV === "rahti" ||
+  (typeof window !== "undefined" &&
+    window.location.hostname.includes("rahtiapp.fi"));
 
 // Define API URL using simpler logic with fallbacks
 let API_URL: string;
@@ -13,7 +15,7 @@ let API_URL: string;
 // First check for explicitly configured URL from environment variables
 if (process.env.NEXT_PUBLIC_API_URL) {
   API_URL = process.env.NEXT_PUBLIC_API_URL;
-} 
+}
 // Handle server-side (SSR) environments
 else if (isServer) {
   if (isRahti) {
@@ -26,7 +28,7 @@ else if (isServer) {
     // Docker environment service name as defined in docker-compose.yaml
     API_URL = "http://api:8000";
   }
-} 
+}
 // Client-side API calls need different handling to work in browsers
 else {
   // In Rahti, client-side requests use relative URLs that will be proxied through Next.js
@@ -43,12 +45,12 @@ else {
 export { API_URL };
 
 // Enable logging for debugging - helpful when troubleshooting API connectivity issues
-console.log("API URL configured as:", API_URL, { 
-  isServer, 
-  isDevelopment, 
-  isRahti, 
-  hostname: typeof window !== 'undefined' ? window.location.hostname : 'server' 
-});
+// console.log("API URL configured as:", API_URL, {
+//   isServer,
+//   isDevelopment,
+//   isRahti,
+//   hostname: typeof window !== 'undefined' ? window.location.hostname : 'server'
+// });
 
-export { isDevelopment, isRahti, isServer };
+  export { isDevelopment, isRahti, isServer };
 

@@ -9,8 +9,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { downloadPdf } from "@/lib/api/api";
-import { UserData } from "@/lib/types";
+import type { UserData } from "@/lib/types";
 import {
   BookOpen,
   Download,
@@ -23,7 +29,8 @@ import {
   Telescope,
   User,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { motion } from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
 interface UserDashboardProps {
@@ -40,6 +47,7 @@ export default function UserDashboard({
   const [selectedPhase, setSelectedPhase] = useState<number>(currentPhase);
   const [activeTab, setActiveTab] = useState("plan");
   const chatRef = useRef<{ resetChat?: () => void }>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   // Get the correct plan text based on selected phase
   const currentPlanText =
@@ -50,191 +58,284 @@ export default function UserDashboard({
   // Decode email for display to fix the '%40' issue
   const displayEmail = decodeURIComponent(userId);
 
-  // Handle PDF download
-  const handleDownload = () => {
+  // Handle PDF download with loading state
+  const handleDownload = useCallback(async () => {
     try {
-      downloadPdf(userId, selectedPhase);
+      setIsLoading(true);
+      await downloadPdf(userId, selectedPhase);
+      toast.success("PDF downloaded successfully");
     } catch (error) {
       console.error("Download error:", error);
       toast.error("Failed to download PDF");
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [userId, selectedPhase]);
 
   // Handle chat reset for the Options menu
-  const handleResetChat = () => {
+  const handleResetChat = useCallback(() => {
     if (chatRef.current.resetChat) {
       chatRef.current.resetChat();
     }
-  };
+  }, []);
 
+  // Extract user name from data or fallback to email username
   const userName =
     (userData.data["Q1. Full Name"] as string) || displayEmail.split("@")[0];
 
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Alt+1, Alt+2, Alt+3 for tab switching
+      if (e.altKey) {
+        if (e.key === "1") {
+          setActiveTab("plan");
+          e.preventDefault();
+        } else if (e.key === "2") {
+          setActiveTab("chat");
+          e.preventDefault();
+        } else if (e.key === "3") {
+          setActiveTab("milestones");
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
-    <div className="container mx-auto py-4 sm:py-8 px-3 sm:px-4">
-      {/* Home Button */}
-      <HomeButton />
+    <TooltipProvider>
+      <div className="container mx-auto py-4 sm:py-8 px-3 sm:px-4">
+        {/* Home Button */}
+        <HomeButton />
 
-      {/* User header section - with improved backdrop blur effect */}
-      <div
-        className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 mt-6 
-  border border-gray-200 dark:border-gray-800 pb-4 bg-white/50 dark:bg-black/50 rounded-lg py-2 px-4
-  shadow-[0_0_15px_rgba(180,180,180,0.15),0_0_5px_rgba(150,150,150,0.1)]
-  dark:shadow-[0_0_15px_rgba(70,70,70,0.25),0_0_5px_rgba(40,40,40,0.15)]
-  relative backdrop-blur-sm overflow-hidden
-  before:absolute before:inset-0 before:bg-gradient-to-r before:from-gray-50/10 before:via-white/5 before:to-gray-50/10 dark:before:from-gray-900/10 dark:before:via-black/5 dark:before:to-gray-900/10 before:rounded-lg before:z-[-1]"
-      >
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-primary">
-            <AvatarFallback className="bg-primary text-primary-foreground text-sm sm:text-base">
-              {userName.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="overflow-hidden">
-            <h1 className="text-xl sm:text-3xl font-bold truncate">
-              {userName}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Learning phase:{" "}
-              <span className="font-medium">
-                {currentPhase === 1 ? "Onboarding" : "Training"}
-              </span>
-            </p>
-          </div>
-        </div>
-
-        {/* Mobile-friendly action buttons */}
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
-            <Button
-              variant={selectedPhase === 1 ? "default" : "outline"}
-              onClick={() => setSelectedPhase(1)}
-              className="flex items-center gap-1 text-xs sm:text-sm h-9"
-              size="sm"
-            >
-              <Route className="h-3.5 w-3.5" />
-              <span className="sm:inline">Onboarding</span>
-            </Button>
-            <Button
-              variant={selectedPhase === 2 ? "default" : "outline"}
-              onClick={() => setSelectedPhase(2)}
-              disabled={currentPhase < 2}
-              className="flex items-center gap-1 text-xs sm:text-sm h-9"
-              size="sm"
-            >
-              <Presentation className="h-3.5 w-3.5" />
-              <span className="sm:inline">Training</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleDownload}
-              className="flex items-center gap-1 text-xs sm:text-sm h-9 mt-2 sm:mt-0"
-              size="sm"
-            >
-              <Download className="h-3.5 w-3.5" />
-              <span className="sm:inline">PDF</span>
-            </Button>
-            <div className="mt-2 sm:mt-0">
-              <OptionsMenu userId={userId} onResetChat={handleResetChat} />
+        {/* User header section - with improved backdrop blur effect */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 mt-6 
+          border border-gray-200 dark:border-gray-800 pb-4 bg-white/50 dark:bg-black/50 rounded-lg py-2 px-4
+          shadow-[0_0_15px_rgba(180,180,180,0.15),0_0_5px_rgba(150,150,150,0.1)]
+          dark:shadow-[0_0_15px_rgba(70,70,70,0.25),0_0_5px_rgba(40,40,40,0.15)]
+          relative backdrop-blur-sm overflow-hidden
+          before:absolute before:inset-0 before:bg-gradient-to-r before:from-gray-50/10 before:via-white/5 before:to-gray-50/10 dark:before:from-gray-900/10 dark:before:via-black/5 dark:before:to-gray-900/10 before:rounded-lg before:z-[-1]"
+        >
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-primary">
+              <AvatarFallback className="bg-primary text-primary-foreground text-sm sm:text-base">
+                {userName.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="overflow-hidden">
+              <h1 className="text-xl sm:text-3xl font-bold truncate">
+                {userName}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Learning phase:{" "}
+                <span className="font-medium">
+                  {currentPhase === 1 ? "Onboarding" : "Training"}
+                </span>
+              </p>
             </div>
           </div>
-        </div>
+
+          {/* Mobile-friendly action buttons */}
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={selectedPhase === 1 ? "default" : "outline"}
+                    onClick={() => setSelectedPhase(1)}
+                    className="flex items-center gap-1 text-xs sm:text-sm h-9"
+                    size="sm"
+                    aria-label="Onboarding phase"
+                  >
+                    <Route className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span className="sm:inline">Onboarding</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>View onboarding plan</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={selectedPhase === 2 ? "default" : "outline"}
+                    onClick={() => setSelectedPhase(2)}
+                    disabled={currentPhase < 2}
+                    className="flex items-center gap-1 text-xs sm:text-sm h-9"
+                    size="sm"
+                    aria-label="Training phase"
+                  >
+                    <Presentation className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span className="sm:inline">Training</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>View training plan</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={handleDownload}
+                    className="flex items-center gap-1 text-xs sm:text-sm h-9 mt-2 sm:mt-0"
+                    size="sm"
+                    disabled={isLoading}
+                    aria-label="Download PDF"
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center gap-1">
+                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        <span className="sm:inline">Loading</span>
+                      </span>
+                    ) : (
+                      <>
+                        <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                        <span className="sm:inline">PDF</span>
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Download as PDF</TooltipContent>
+              </Tooltip>
+
+              <div className="mt-2 sm:mt-0">
+                <OptionsMenu userId={userId} onResetChat={handleResetChat} />
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
+            {/* Mobile-friendly sidebar - only show on larger screens or when menu toggled */}
+            <div className="col-span-1 md:block">
+              <Card className="shadow-sm">
+                <CardHeader className="pb-2 bg-muted/50 justify-start items-center">
+                  <CardTitle className="text-base sm:text-lg flex items-baseline justify-between">
+                    <div className="flex items-center gap-2">
+                      <Layout
+                        className="h-4 w-4 sm:h-5 sm:w-5 text-primary"
+                        aria-hidden="true"
+                      />
+                      Dashboard
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {/* User Info Card - with truncation for long text */}
+                  <div className="p-3 sm:p-4 border-b">
+                    <h3 className="text-xs sm:text-sm font-medium mb-2 sm:mb-3 text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <User
+                        className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                        aria-hidden="true"
+                      />
+                      Profile
+                    </h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <User
+                          className="text-muted-foreground h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span className="text-xs sm:text-sm truncate">
+                          {userName}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail
+                          className="text-muted-foreground h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span className="text-xs sm:text-sm truncate">
+                          {displayEmail}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 sm:p-4">
+                    <h3 className="text-xs sm:text-sm font-medium mb-2 sm:mb-3 text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <Telescope
+                        className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                        aria-hidden="true"
+                      />
+                      Navigation
+                    </h3>
+                    <TabsList className="flex flex-col w-full h-auto space-y-1 bg-transparent">
+                      <TabsTrigger
+                        value="plan"
+                        className="justify-start w-full text-xs sm:text-sm py-1.5 sm:py-2 bg-background data-[state=active]:bg-primary/10"
+                        aria-label="Learning Plan tab"
+                      >
+                        <BookOpen
+                          className="h-3.5 w-3.5 mr-2"
+                          aria-hidden="true"
+                        />
+                        Learning Plan
+                        <span className="sr-only">(Alt+1)</span>
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="chat"
+                        className="justify-start w-full text-xs sm:text-sm py-1.5 sm:py-2 bg-background data-[state=active]:bg-primary/10"
+                        aria-label="Chat Assistant tab"
+                      >
+                        <MessageSquare
+                          className="h-3.5 w-3.5 mr-2"
+                          aria-hidden="true"
+                        />
+                        Chat Assistant
+                        <span className="sr-only">(Alt+2)</span>
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="milestones"
+                        className="justify-start w-full text-xs sm:text-sm py-1.5 sm:py-2 bg-background data-[state=active]:bg-primary/10"
+                        aria-label="Milestones tab"
+                      >
+                        <Sparkles
+                          className="h-3.5 w-3.5 mr-2"
+                          aria-hidden="true"
+                        />
+                        Milestones
+                        <span className="sr-only">(Alt+3)</span>
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Main content area - adjust content based on active tab */}
+            <div className="col-span-1 md:col-span-3">
+              <TabsContent value="plan" className="m-0">
+                <MarkdownPlanViewer markdown={currentPlanText} />
+              </TabsContent>
+
+              <TabsContent value="chat" className="m-0">
+                <Chat
+                  userId={userId}
+                  onReady={(methods) => {
+                    chatRef.current = methods;
+                  }}
+                />
+              </TabsContent>
+
+              <TabsContent value="milestones" className="m-0">
+                <Milestones
+                  userId={userId}
+                  initialMilestones={userData.milestones}
+                  initialStates={userData.learning_state.states}
+                />
+              </TabsContent>
+            </div>
+          </div>
+        </Tabs>
       </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full ">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
-          {/* Mobile-friendly sidebar - only show on larger screens or when menu toggled */}
-          <div className="col-span-1 md:block">
-            <Card className="shadow-sm">
-              <CardHeader className="pb-2 bg-muted/50 justify-start items-center">
-                <CardTitle className="text-base sm:text-lg  flex items-baseline justify-between">
-                  <div className="flex items-center gap-2">
-                    <Layout className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                    Dashboard
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                {/* User Info Card - with truncation for long text */}
-                <div className="p-3 sm:p-4 border-b">
-                  <h3 className="text-xs sm:text-sm font-medium mb-2 sm:mb-3 text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                    <User className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                    Profile
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="text-muted-foreground h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                      <span className="text-xs sm:text-sm truncate">
-                        {userName}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Mail className="text-muted-foreground h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                      <span className="text-xs sm:text-sm truncate">
-                        {displayEmail}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-3 sm:p-4">
-                  <h3 className="text-xs sm:text-sm font-medium mb-2 sm:mb-3 text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                    <Telescope className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                    Navigation
-                  </h3>
-                  <TabsList className="flex flex-col w-full h-auto space-y-1 bg-transparent">
-                    <TabsTrigger
-                      value="plan"
-                      className="justify-start w-full text-xs sm:text-sm py-1.5 sm:py-2 bg-background data-[state=active]:bg-primary/10"
-                    >
-                      <BookOpen className="h-3.5 w-3.5 mr-2" />
-                      Learning Plan
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="chat"
-                      className="justify-start w-full text-xs sm:text-sm py-1.5 sm:py-2 bg-background data-[state=active]:bg-primary/10"
-                    >
-                      <MessageSquare className="h-3.5 w-3.5 mr-2" />
-                      Chat Assistant
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="milestones"
-                      className="justify-start w-full text-xs sm:text-sm py-1.5 sm:py-2 bg-background data-[state=active]:bg-primary/10"
-                    >
-                      <Sparkles className="h-3.5 w-3.5 mr-2" />
-                      Milestones
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main content area - adjust content based on active tab */}
-          <div className="col-span-1 md:col-span-3">
-            <TabsContent value="plan" className="m-0">
-              <MarkdownPlanViewer markdown={currentPlanText} />
-            </TabsContent>
-
-            <TabsContent value="chat" className="m-0">
-              <Chat
-                userId={userId}
-                onReady={(methods) => {
-                  chatRef.current = methods;
-                }}
-              />
-            </TabsContent>
-
-            <TabsContent value="milestones" className="m-0">
-              <Milestones
-                userId={userId}
-                initialMilestones={userData.milestones}
-                initialStates={userData.learning_state.states}
-              />
-            </TabsContent>
-          </div>
-        </div>
-      </Tabs>
-    </div>
+    </TooltipProvider>
   );
 }
