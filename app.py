@@ -322,7 +322,17 @@ def load_user_state(user_id):
     user_dir = os.path.join('user_data', user_id)
     
     if not os.path.exists(user_dir):
-        os.makedirs(user_dir, exist_ok=True)
+        try:
+            os.makedirs(user_dir, exist_ok=True)
+        except PermissionError as e:
+            print(f"Warning: Permission error creating directory {user_dir}: {e}")
+            # Return a default state instead of failing
+            if user_id in user_datasets and 'milestones' in user_datasets[user_id]:
+                return {
+                    'labels': user_datasets[user_id]['milestones'],
+                    'states': [False] * len(user_datasets[user_id]['milestones'])
+                }
+            return None
         
     state_file = os.path.join(user_dir, 'state_variables.pickle')
     
@@ -330,8 +340,14 @@ def load_user_state(user_id):
         try:
             with open(state_file, 'rb') as f:
                 return pickle.load(f)
-        except Exception as e:
-            print(f"Error loading user state: {e}")
+        except (PermissionError, pickle.PickleError) as e:
+            print(f"Warning: Error loading user state: {e}")
+            # Return a memory-only state
+            if user_id in user_datasets and 'milestones' in user_datasets[user_id]:
+                return {
+                    'labels': user_datasets[user_id]['milestones'],
+                    'states': [False] * len(user_datasets[user_id]['milestones'])
+                }
             return None
     
     # Create default state
@@ -347,15 +363,18 @@ def load_user_state(user_id):
 
 def save_user_state(user_id, state):
     """Saves the user's learning state"""
+    # For Rahti environment, handle in-memory only mode if needed
+    is_rahti = os.environ.get('DEPLOYMENT_ENV') == 'rahti'
+    
     user_dir = os.path.join('user_data', user_id)
     
-    if not os.path.exists(user_dir):
-        os.makedirs(user_dir, exist_ok=True)
-        
-    state_file = os.path.join(user_dir, 'state_variables.pickle')
-    temp_file = os.path.join(user_dir, 'state_variables.temp.pickle')
-    
     try:
+        if not os.path.exists(user_dir):
+            os.makedirs(user_dir, exist_ok=True)
+            
+        state_file = os.path.join(user_dir, 'state_variables.pickle')
+        temp_file = os.path.join(user_dir, 'state_variables.temp.pickle')
+        
         with open(temp_file, 'wb') as f:
             pickle.dump(state, f)
             f.flush()
@@ -367,6 +386,20 @@ def save_user_state(user_id, state):
             
         os.rename(temp_file, state_file)
         return True
+    except PermissionError as e:
+        print(f"Error saving user state: {e}")
+        if is_rahti:
+            print("Running in Rahti environment - continuing with in-memory state only")
+            # We'll consider it a success in Rahti even if we can't save to disk
+            # This allows the UI to show the updated state during the current session
+            return True
+        
+        if os.path.exists(temp_file):
+            try:
+                os.remove(temp_file)
+            except:
+                pass
+        return False
     except Exception as e:
         print(f"Error saving user state: {e}")
         if os.path.exists(temp_file):

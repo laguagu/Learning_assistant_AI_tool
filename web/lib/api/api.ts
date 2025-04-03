@@ -1,6 +1,7 @@
 // lib/api.ts - Single API file for both client and server
 import { StructuredLearningPlan, UserData } from "../types";
 import { API_URL } from "./config";
+import { downloadPdfAction } from "@/app/actions";
 
 /**
  * Fetches a list of all users with NO caching to ensure fresh data
@@ -114,25 +115,44 @@ export async function updateMilestones(
 }
 
 /**
- * Downloads PDF file
+ * Downloads PDF file using server action
  */
 export async function downloadPdf(
   userId: string,
   phase: number
 ): Promise<void> {
-  const url = `${API_URL}/api/download-pdf/${userId}/${phase}`;
-
   try {
-    // Create a hidden anchor element
+    console.log("Downloading PDF using server action for", userId, "phase", phase);
+    
+    // Use server action to download PDF - works in all environments
+    const result = await downloadPdfAction(userId, phase);
+    
+    if (!result.success) {
+      console.error("Failed to download PDF:", result.error);
+      throw new Error(result.error);
+    }
+    
+    // Create a blob from the PDF data
+    if (!result.data) {
+      throw new Error("PDF data is missing");
+    }
+    const pdfBlob = new Blob([result.data], { type: result.contentType });
+    
+    // Create a URL for the blob
+    const url = URL.createObjectURL(pdfBlob);
+    
+    // Create a link to download the PDF
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `learning_plan_phase${phase}.pdf`);
-    link.setAttribute("target", "_self");
-
-    // Add to document, click it, and remove it
+    link.setAttribute("download", result.filename);
+    
+    // Trigger download
     document.body.appendChild(link);
     link.click();
+    
+    // Clean up
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   } catch (error) {
     console.error("Download error:", error);
     throw error;
