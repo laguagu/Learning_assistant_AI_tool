@@ -26,8 +26,6 @@ async function* fetchBackendStream(userId: string, message: string) {
     userId
   )}&message=${encodeURIComponent(message)}`;
 
-  console.log(`[ROUTE] Fetching from backend: ${url}`);
-
   try {
     // Pyyntö backendille
     const response = await fetch(url, {
@@ -63,13 +61,11 @@ async function* fetchBackendStream(userId: string, message: string) {
       const { done, value } = await reader.read();
 
       if (done) {
-        console.log("[ROUTE] Done reading from backend");
         break;
       }
 
       // Dekoodaa teksti ja lisää puskuriin
       const text = decoder.decode(value, { stream: true });
-      console.log(`[ROUTE] Received from backend: ${text.slice(0, 50)}...`);
       buffer += text;
 
       // Jaa puskuri SSE-tapahtumiin
@@ -98,8 +94,6 @@ async function* fetchBackendStream(userId: string, message: string) {
 async function* fallbackPostRequest(userId: string, message: string) {
   const textEncoder = new TextEncoder();
   try {
-    console.log("[ROUTE] Using fallback POST request");
-
     // Käytä POST-endpointia suoraan backendin puolella
     const response = await fetch(`${API_URL}/api/chat`, {
       method: "POST",
@@ -134,8 +128,6 @@ async function* fallbackPostRequest(userId: string, message: string) {
 }
 
 export async function GET(request: NextRequest) {
-  console.log("[ROUTE] Stream handler called");
-
   // Hae query-parametrit
   const userId = request.nextUrl.searchParams.get("user_id");
   const message = request.nextUrl.searchParams.get("message");
