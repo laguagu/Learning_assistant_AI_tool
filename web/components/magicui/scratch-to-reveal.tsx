@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils"
 import { motion, useAnimation } from "motion/react"
 import type React from "react"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 interface ScratchToRevealProps {
   children: React.ReactNode
@@ -45,6 +45,58 @@ export const ScratchToReveal: React.FC<ScratchToRevealProps> = ({
     }
   }, [gradientColors])
 
+  const startAnimation = useCallback(async () => {
+    await controls.start({
+      scale: [1, 1.5, 1],
+      rotate: [0, 10, -10, 10, -10, 0],
+      transition: { duration: 0.5 },
+    })
+
+    // Call onComplete after animation finishes
+    if (onComplete) {
+      onComplete()
+    }
+  }, [controls, onComplete])
+
+  const checkCompletion = useCallback(() => {
+    if (isComplete) return
+
+    const canvas = canvasRef.current
+    const ctx = canvas?.getContext("2d")
+    if (canvas && ctx) {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const pixels = imageData.data
+      const totalPixels = pixels.length / 4
+      let clearPixels = 0
+
+      for (let i = 3; i < pixels.length; i += 4) {
+        if (pixels[i] === 0) clearPixels++
+      }
+
+      const percentage = (clearPixels / totalPixels) * 100
+
+      if (percentage >= minScratchPercentage) {
+        setIsComplete(true)
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        startAnimation()
+      }
+    }
+  }, [isComplete, minScratchPercentage, startAnimation])
+
+  const scratch = useCallback((clientX: number, clientY: number) => {
+    const canvas = canvasRef.current
+    const ctx = canvas?.getContext("2d")
+    if (canvas && ctx) {
+      const rect = canvas.getBoundingClientRect()
+      const x = clientX - rect.left + 16
+      const y = clientY - rect.top + 16
+      ctx.globalCompositeOperation = "destination-out"
+      ctx.beginPath()
+      ctx.arc(x, y, 30, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }, [])
+
   useEffect(() => {
     const handleDocumentMouseMove = (event: MouseEvent) => {
       if (!isScratching) return
@@ -84,63 +136,10 @@ export const ScratchToReveal: React.FC<ScratchToRevealProps> = ({
       document.removeEventListener("touchend", handleDocumentTouchEnd)
       document.removeEventListener("touchcancel", handleDocumentTouchEnd)
     }
-  }, [isScratching])
+  }, [isScratching, scratch, checkCompletion])
 
   const handleMouseDown = () => setIsScratching(true)
-
   const handleTouchStart = () => setIsScratching(true)
-
-  const scratch = (clientX: number, clientY: number) => {
-    const canvas = canvasRef.current
-    const ctx = canvas?.getContext("2d")
-    if (canvas && ctx) {
-      const rect = canvas.getBoundingClientRect()
-      const x = clientX - rect.left + 16
-      const y = clientY - rect.top + 16
-      ctx.globalCompositeOperation = "destination-out"
-      ctx.beginPath()
-      ctx.arc(x, y, 30, 0, Math.PI * 2)
-      ctx.fill()
-    }
-  }
-
-  const startAnimation = async () => {
-    await controls.start({
-      scale: [1, 1.5, 1],
-      rotate: [0, 10, -10, 10, -10, 0],
-      transition: { duration: 0.5 },
-    })
-
-    // Call onComplete after animation finishes
-    if (onComplete) {
-      onComplete()
-    }
-  }
-
-  const checkCompletion = () => {
-    if (isComplete) return
-
-    const canvas = canvasRef.current
-    const ctx = canvas?.getContext("2d")
-    if (canvas && ctx) {
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      const pixels = imageData.data
-      const totalPixels = pixels.length / 4
-      let clearPixels = 0
-
-      for (let i = 3; i < pixels.length; i += 4) {
-        if (pixels[i] === 0) clearPixels++
-      }
-
-      const percentage = (clearPixels / totalPixels) * 100
-
-      if (percentage >= minScratchPercentage) {
-        setIsComplete(true)
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        startAnimation()
-      }
-    }
-  }
 
   return (
     <motion.div

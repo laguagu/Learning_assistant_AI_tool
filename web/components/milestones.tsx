@@ -181,10 +181,6 @@ export function Milestones({
   const handleRewardRevealed = () => {
     setRewardRevealed(true);
     triggerConfetti();
-    toast.success("Congratulations on your achievement!", {
-      icon: "🎉",
-      duration: 5000,
-    });
   };
 
   const completedCount = states.filter(Boolean).length;
@@ -370,7 +366,7 @@ export function Milestones({
                       Congratulations!
                     </h3>
                     <p className="text-center text-sm mb-4">
-                      You've mastered all your learning milestones!
+                      You&apos;ve mastered all your learning milestones!
                     </p>
                     <div className="flex justify-center space-x-2">
                       {[...Array(5)].map((_, i) => (
@@ -431,7 +427,7 @@ export function Milestones({
                     Congratulations!
                   </h3>
                   <p className="text-center text-sm mb-4">
-                    You've mastered all your learning milestones!
+                    You&apos;ve mastered all your learning milestones!
                   </p>
                   <div className="flex justify-center space-x-2">
                     {[...Array(5)].map((_, i) => (

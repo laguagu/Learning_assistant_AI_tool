@@ -21,14 +21,24 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { streamChatMessage } from "@/lib/api/stream";
 import { useChatStorage } from "@/lib/hooks/useChatStorage";
 import type { ChatMessage, SavedChat } from "@/lib/types";
-import { ArrowBigRight, BookmarkPlus, Bot, Download, Folder, Loader2, RefreshCw, Send, Settings, UserIcon } from 'lucide-react';
-import { motion, AnimatePresence } from "motion/react";
-import { startTransition, useEffect, useRef, useState, useCallback } from "react";
+import {
+  ArrowBigRight,
+  BookmarkPlus,
+  Bot,
+  Download,
+  Folder,
+  Loader2,
+  RefreshCw,
+  Save,
+  Send,
+  UserIcon,
+} from "lucide-react";
+import { motion } from "motion/react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
 // Learning-related suggested questions
@@ -74,7 +84,6 @@ export function Chat({ userId, onReady }: ChatProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
-  const lastMessageRef = useRef<HTMLDivElement>(null);
 
   const {
     savedChats,
@@ -90,8 +99,8 @@ export function Chat({ userId, onReady }: ChatProps) {
     handleDownloadChat,
   } = useChatStorage(userId);
 
-  // Reset chat function - memoized with useCallback
-  const resetChat = useCallback(() => {
+  // Reset chat function
+  const resetChat = () => {
     startTransition(() => {
       setMessages([
         {
@@ -108,39 +117,35 @@ export function Chat({ userId, onReady }: ChatProps) {
       inputRef.current.focus();
     }
     toast.success("Chat history cleared");
-  }, []);
+  };
 
   // Expose the resetChat method
   useEffect(() => {
     if (onReady) {
       onReady({ resetChat });
     }
-  }, [onReady, resetChat]);
+  }, [onReady]);
 
-  // Function to scroll to the bottom - memoized with useCallback
-  const scrollToBottom = useCallback(() => {
+  // Function to scroll to the bottom
+  const scrollToBottom = () => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
-  }, []);
+  };
 
   // Check if scroll button should be shown
-  const handleScroll = useCallback(() => {
+  const handleScroll = () => {
     if (scrollAreaRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
       const isScrolled = scrollHeight - scrollTop - clientHeight > 100;
       setShowScrollButton(isScrolled);
     }
-  }, []);
+  };
 
   // Scroll chat area down when messages change
   useEffect(() => {
-    if (lastMessageRef.current) {
-      lastMessageRef.current.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      scrollToBottom();
-    }
-  }, [messages, scrollToBottom]);
+    scrollToBottom();
+  }, [messages]);
 
   // Focus input when moving from welcome screen to chat
   useEffect(() => {
@@ -149,37 +154,28 @@ export function Chat({ userId, onReady }: ChatProps) {
     }
   }, [hasInteracted]);
 
-  // Add scroll event listener
-  useEffect(() => {
-    const scrollArea = scrollAreaRef.current;
-    if (scrollArea) {
-      scrollArea.addEventListener('scroll', handleScroll);
-      return () => scrollArea.removeEventListener('scroll', handleScroll);
-    }
-  }, [handleScroll]);
-
   // Handle save chat with current messages
-  const onSaveChat = useCallback(() => {
+  const onSaveChat = () => {
     handleSaveChat(messages);
-  }, [handleSaveChat, messages]);
+  };
 
   // Handle load chat with setting messages
-  const onLoadChat = useCallback((chat: SavedChat) => {
+  const onLoadChat = (chat: SavedChat) => {
     handleLoadChat(chat, (loadedMessages) => {
       startTransition(() => {
         setMessages(loadedMessages);
         setHasInteracted(true);
       });
     });
-  }, [handleLoadChat]);
+  };
 
   // Handle download current chat
-  const onDownloadChat = useCallback(() => {
+  const onDownloadChat = () => {
     handleDownloadChat(messages);
-  }, [handleDownloadChat, messages]);
+  };
 
   // Handle suggested question click
-  const handleSuggestionClick = useCallback(async (question: string) => {
+  const handleSuggestionClick = async (question: string) => {
     // Add user message
     const userMessage: ChatMessage = { role: "user", content: question };
     setMessages((prev) => [...prev, userMessage]);
@@ -196,6 +192,8 @@ export function Chat({ userId, onReady }: ChatProps) {
 
     try {
       await streamChatMessage(decodeURIComponent(userId), question, (chunk) => {
+        console.log(`[CHAT] Processing chunk of length: ${chunk.length}`);
+
         // Update the message with each new chunk
         setMessages((prev) => {
           const newMessages = [...prev];
@@ -207,7 +205,12 @@ export function Chat({ userId, onReady }: ChatProps) {
           }
           return newMessages;
         });
+
+        // Scroll to ensure the latest content is visible
+        setTimeout(scrollToBottom, 100);
       });
+
+      console.log("[CHAT] Stream completed successfully");
     } catch (error) {
       console.error("[CHAT] Error:", error);
       toast.error("Failed to send message. Please try again.");
@@ -223,11 +226,12 @@ export function Chat({ userId, onReady }: ChatProps) {
       });
     } finally {
       setLoading(false);
+      setTimeout(scrollToBottom, 200);
     }
-  }, [messages.length, userId]);
+  };
 
   // Using streamChatMessage from api.ts with startTransition
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!input.trim() || loading) return;
@@ -251,16 +255,16 @@ export function Chat({ userId, onReady }: ChatProps) {
     const assistantIndex = messages.length + 1;
 
     try {
+      // STREAMING SOLUTION:
+      // 1. We receive the FULL markdown content with each update
+      // 2. We completely replace the message content each time (not append)
+      // 3. This ensures proper rendering of markdown elements like lists
+      // 4. We immediately update the UI with each new chunk
       await streamChatMessage(
         decodeURIComponent(userId),
         userInput,
         (chunk) => {
-          if (
-            chunk === "Thinking..." &&
-            messages[assistantIndex]?.content !== ""
-          ) {
-            return;
-          }
+          console.log(`[CHAT] Processing chunk of length: ${chunk.length}`);
 
           // Update the message with each new chunk
           setMessages((prev) => {
@@ -273,8 +277,13 @@ export function Chat({ userId, onReady }: ChatProps) {
             }
             return newMessages;
           });
+
+          // Scroll to ensure the latest content is visible
+          setTimeout(scrollToBottom, 100);
         }
       );
+
+      console.log("[CHAT] Stream completed successfully");
     } catch (error) {
       console.error("[CHAT] Error:", error);
       toast.error("Failed to send message. Please try again.");
@@ -291,25 +300,15 @@ export function Chat({ userId, onReady }: ChatProps) {
     } finally {
       setLoading(false);
 
+      // One final scroll to make sure everything is visible
+      setTimeout(scrollToBottom, 200);
+
       // Focus input after sending
       if (inputRef.current) {
         inputRef.current.focus();
       }
     }
-  }, [input, loading, messages, userId]);
-
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl/Cmd + Enter to submit
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !loading && input.trim()) {
-        handleSubmit(e as unknown as React.FormEvent);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSubmit, input, loading]);
+  };
 
   return (
     <Card className="w-full h-[80vh] flex flex-col shadow-md border overflow-hidden">
@@ -319,261 +318,222 @@ export function Chat({ userId, onReady }: ChatProps) {
           Learning Assistant
         </CardTitle>
         <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <DropdownMenu>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-1"
-                      aria-label="Chat options"
-                    >
-                      <Settings className="h-4 w-4" />
-                      <span className="hidden sm:inline">Chat Options</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent>Chat options</TooltipContent>
-              </Tooltip>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setSaveChatDialogOpen(true)}>
-                  <BookmarkPlus className="h-4 w-4 mr-2" />
-                  Save current chat
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSavedChatsDialogOpen(true)}>
-                  <Folder className="h-4 w-4 mr-2" />
-                  Load saved chats
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onDownloadChat}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download chat
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </TooltipProvider>
-          
-          <Tooltip>
-            <TooltipTrigger asChild>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={resetChat}
                 className="flex items-center gap-1"
-                aria-label="New chat"
               >
-                <RefreshCw className="h-4 w-4" />
-                <span className="hidden sm:inline">New Chat</span>
+                <Save className="h-4 w-4" />
+                <span>Save</span>
               </Button>
-            </TooltipTrigger>
-            <TooltipContent>Start a new chat</TooltipContent>
-          </Tooltip>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setSaveChatDialogOpen(true)}>
+                <BookmarkPlus className="h-4 w-4 mr-2" />
+                Save current chat
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSavedChatsDialogOpen(true)}>
+                <Folder className="h-4 w-4 mr-2" />
+                Load saved chats
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onDownloadChat}>
+                <Download className="h-4 w-4 mr-2" />
+                Download chat
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={resetChat}
+            className="flex items-center gap-1"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span>New Chat</span>
+          </Button>
         </div>
       </CardHeader>
 
-      <AnimatePresence mode="wait">
-        {!hasInteracted && messages.length <= 1 ? (
-          <motion.div
-            key="welcome"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="flex-1 flex flex-col items-center justify-center gap-4 px-4 py-4 overflow-y-auto"
-          >
-            <div className="text-center space-y-2 max-w-lg mb-2">
-              <h2 className="text-xl sm:text-2xl font-semibold text-primary">
-                Welcome to your Learning Assistant
-              </h2>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                I can help you with your learning plan and answer questions about
-                your entrepreneurship journey.
-              </p>
-            </div>
+      {!hasInteracted && messages.length <= 1 ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex-1 flex flex-col items-center justify-center gap-4 px-4 py-4 overflow-y-auto"
+        >
+          <div className="text-center space-y-2 max-w-lg mb-2">
+            <h2 className="text-xl sm:text-2xl font-semibold text-primary">
+              Welcome to your Learning Assistant
+            </h2>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              I can help you with your learning plan and answer questions about
+              your entrepreneurship journey.
+            </p>
+          </div>
 
-            {/* Suggested Questions - now with better spacing and responsive design */}
-            <div className="grid grid-cols-1 gap-2 w-full max-w-2xl mb-auto">
-              {suggestedQuestions.map((question, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.1 * index }}
-                >
-                  <Button
-                    variant="outline"
-                    className="w-full text-left justify-start h-auto py-2 px-3"
-                    onClick={() => handleSuggestionClick(question.action)}
-                  >
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium text-primary text-sm">
-                        {question.title}
-                      </span>
-                      <span className="text-xs text-muted-foreground mt-1">
-                        {question.label}
-                      </span>
-                    </div>
-                  </Button>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Input form with fixed position at bottom */}
-            <div className="w-full max-w-2xl mt-4 sticky bottom-0 bg-background pt-2 pb-2">
-              <form
-                className="flex w-full items-center space-x-2"
-                onSubmit={handleSubmit}
+          {/* Suggested Questions - now with better spacing and responsive design */}
+          <div className="grid grid-cols-1 gap-2 w-full max-w-2xl mb-auto">
+            {suggestedQuestions.map((question, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 * index }}
               >
-                <Input
-                  ref={inputRef}
-                  type="text"
-                  placeholder="Or type your own question..."
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  disabled={loading}
-                  className="flex-1"
-                  aria-label="Chat input"
-                />
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="submit"
-                      disabled={loading || !input.trim()}
-                      size="icon"
-                      className={loading ? "opacity-50" : ""}
-                      aria-label="Send message"
-                    >
-                      {loading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Send message (Ctrl+Enter)</TooltipContent>
-                </Tooltip>
-              </form>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="chat"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="flex-1 relative overflow-hidden"
-          >
-            <div
-              ref={scrollAreaRef}
-              onScroll={handleScroll}
-              className="h-full overflow-y-auto pb-4 scroll-smooth"
-              role="log"
-              aria-live="polite"
-              aria-label="Chat conversation"
-            >
-              <div className="space-y-5 px-4 pt-4 w-full">
-                {messages.map((msg, i) => {
-                  const isLastMessage = i === messages.length - 1;
-                  return (
-                    <div
-                      key={i}
-                      ref={isLastMessage ? lastMessageRef : null}
-                      className={`flex ${
-                        msg.role === "user" ? "justify-end" : "justify-start"
-                      } w-full`}
-                    >
-                      <div
-                        className={`flex ${
-                          msg.role === "user" ? "flex-row-reverse" : "flex-row"
-                        } gap-3 ${
-                          msg.role === "user" ? "max-w-[85%]" : "max-w-full"
-                        }`}
-                      >
-                        <Avatar
-                          className={
-                            msg.role === "user"
-                              ? "bg-primary h-8 w-8 shrink-0"
-                              : "bg-secondary h-8 w-8 shrink-0"
-                          }
-                        >
-                          <AvatarFallback>
-                            {msg.role === "user" ? (
-                              <UserIcon className="h-4 w-4" aria-hidden="true" />
-                            ) : (
-                              <Bot className="h-4 w-4" aria-hidden="true" />
-                            )}
-                          </AvatarFallback>
-                        </Avatar>
+                <Button
+                  variant="outline"
+                  className="w-full text-left justify-start h-auto py-2 px-3"
+                  onClick={() => handleSuggestionClick(question.action)}
+                >
+                  <div className="flex flex-col items-start">
+                    <span className="font-medium text-primary text-sm">
+                      {question.title}
+                    </span>
+                    <span className="text-xs text-muted-foreground mt-1">
+                      {question.label}
+                    </span>
+                  </div>
+                </Button>
+              </motion.div>
+            ))}
+          </div>
 
-                        <div
-                          className={`p-3 rounded-lg ${
-                            msg.role === "user"
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-accent w-full"
-                          }`}
-                          style={{
-                            width: msg.role === "assistant" ? "100%" : "auto",
-                          }}
-                        >
-                          {msg.role === "user" ? (
-                            <div className="whitespace-pre-wrap break-words">
-                              {msg.content}
+          {/* Input form with fixed position at bottom */}
+          <div className="w-full max-w-2xl mt-4 sticky bottom-0 bg-background pt-2 pb-2">
+            <form
+              className="flex w-full items-center space-x-2"
+              onSubmit={handleSubmit}
+            >
+              <Input
+                ref={inputRef}
+                type="text"
+                placeholder="Or type your own question..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                disabled={loading}
+                className="flex-1"
+              />
+              <Button
+                type="submit"
+                disabled={loading || !input.trim()}
+                size="icon"
+                className={loading ? "opacity-50" : ""}
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </form>
+          </div>
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex-1 relative overflow-hidden"
+        >
+          <div
+            ref={scrollAreaRef}
+            onScroll={handleScroll}
+            className="h-full overflow-y-auto pb-4"
+          >
+            <div className="space-y-5 px-4 pt-4 w-full">
+              {messages.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`flex ${
+                    msg.role === "user" ? "justify-end" : "justify-start"
+                  } w-full`}
+                >
+                  <div
+                    className={`flex ${
+                      msg.role === "user" ? "flex-row-reverse" : "flex-row"
+                    } gap-3 ${
+                      msg.role === "user" ? "max-w-[85%]" : "max-w-full"
+                    }`}
+                  >
+                    <Avatar
+                      className={
+                        msg.role === "user"
+                          ? "bg-primary h-8 w-8 shrink-0"
+                          : "bg-secondary h-8 w-8 shrink-0"
+                      }
+                    >
+                      <AvatarFallback>
+                        {msg.role === "user" ? (
+                          <UserIcon className="h-4 w-4" />
+                        ) : (
+                          <Bot className="h-4 w-4" />
+                        )}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div
+                      className={`p-3 rounded-lg ${
+                        msg.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-accent w-full"
+                      }`}
+                      style={{
+                        width: msg.role === "assistant" ? "100%" : "auto",
+                      }}
+                    >
+                      {msg.role === "user" ? (
+                        <div className="whitespace-pre-wrap break-words">
+                          {msg.content}
+                        </div>
+                      ) : (
+                        <div className="break-words w-full">
+                          {msg.content === "" && loading ? (
+                            <div className="flex items-center space-x-2">
+                              <span>Thinking</span>
+                              <span className="inline-block animate-bounce">
+                                .
+                              </span>
+                              <span className="inline-block animate-bounce animation-delay-200">
+                                .
+                              </span>
+                              <span className="inline-block animate-bounce animation-delay-400">
+                                .
+                              </span>
                             </div>
                           ) : (
-                            <div className="break-words w-full">
-                              {msg.content === "" && loading ? (
-                                <div className="flex items-center space-x-2">
-                                  <span>Thinking</span>
-                                  <span className="inline-block animate-bounce">
-                                    .
-                                  </span>
-                                  <span className="inline-block animate-bounce animation-delay-200">
-                                    .
-                                  </span>
-                                  <span className="inline-block animate-bounce animation-delay-400">
-                                    .
-                                  </span>
-                                </div>
-                              ) : (
-                                <Markdown
-                                  className="prose prose-zinc prose-sm prose-headings:my-2 
+                            <Markdown
+                              className="prose prose-zinc prose-sm prose-headings:my-2 
                                       prose-ul:pl-5 prose-ol:pl-5 prose-li:pl-1 prose-li:my-0 
                                       max-w-none w-full dark:prose-invert"
-                                >
-                                  {msg.content}
-                                </Markdown>
-                              )}
-                            </div>
+                              debugMode={true} // Always enable debug mode to help diagnose issues
+                            >
+                              {msg.content}
+                            </Markdown>
                           )}
                         </div>
-                      </div>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                </div>
+              ))}
             </div>
+          </div>
 
-            {showScrollButton && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={scrollToBottom}
-                    className="absolute bottom-4 right-4 rounded-full shadow-lg bg-white/80 
-                             hover:bg-white dark:bg-zinc-900/80 dark:hover:bg-zinc-900"
-                    aria-label="Scroll to bottom"
-                  >
-                    <ArrowBigRight className="h-4 w-4 rotate-90" aria-hidden="true" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Scroll to bottom</TooltipContent>
-              </Tooltip>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          {showScrollButton && (
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={scrollToBottom}
+              className="absolute bottom-4 right-4 rounded-full shadow-lg bg-white/80 
+                       hover:bg-white dark:bg-zinc-900/80 dark:hover:bg-zinc-900"
+            >
+              <ArrowBigRight className="h-4 w-4 rotate-90" />
+            </Button>
+          )}
+        </motion.div>
+      )}
 
       {hasInteracted && (
         <CardFooter className="p-3 border-t bg-background shrink-0">
@@ -589,26 +549,19 @@ export function Chat({ userId, onReady }: ChatProps) {
               onChange={(e) => setInput(e.target.value)}
               disabled={loading}
               className="flex-1"
-              aria-label="Chat input"
             />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="submit"
-                  disabled={loading || !input.trim()}
-                  size="icon"
-                  className={loading ? "opacity-50" : ""}
-                  aria-label="Send message"
-                >
-                  {loading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  ) : (
-                    <Send className="h-4 w-4" aria-hidden="true" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Send message (Ctrl+Enter)</TooltipContent>
-            </Tooltip>
+            <Button
+              type="submit"
+              disabled={loading || !input.trim()}
+              size="icon"
+              className={loading ? "opacity-50" : ""}
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
           </form>
         </CardFooter>
       )}
@@ -684,7 +637,6 @@ export function Chat({ userId, onReady }: ChatProps) {
                         e.stopPropagation();
                         handleDeleteChat(chat.id);
                       }}
-                      aria-label={`Delete chat ${chat.name}`}
                     >
                       Delete
                     </Button>
