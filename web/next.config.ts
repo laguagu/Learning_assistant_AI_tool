@@ -7,10 +7,10 @@ const nextConfig: NextConfig = {
     // Determine the environment
     const isDevelopment = process.env.NODE_ENV === "development";
     const isRahti = process.env.DEPLOYMENT_ENV === "rahti";
-    
+
     // Use different backend URLs depending on environment
     let apiBaseUrl;
-    
+
     if (isRahti) {
       // In Rahti, use the RAHTI_API_URL environment variable if available
       apiBaseUrl = process.env.RAHTI_API_URL || "http://upbeat-backend:8000";
@@ -21,11 +21,21 @@ const nextConfig: NextConfig = {
       // In Docker environment, use service name as defined in docker-compose
       apiBaseUrl = "http://api:8000";
     }
-    
-    console.log(`Using API base URL for rewrites: ${apiBaseUrl} (env: ${isDevelopment ? 'development' : isRahti ? 'rahti' : 'production'})`);
-    
+
+    console.log(`Using API base URL for rewrites: ${apiBaseUrl}`);
+
     return [
-      // Make PDF download work - ALWAYS apply this rewrite regardless of environment
+      // Normal POST chat endpoint - should work in all environments
+      {
+        source: "/api/chat",
+        destination: `${apiBaseUrl}/api/chat`,
+      },
+      // Streaming endpoint with special handling
+      {
+        source: "/api/chat/stream",
+        destination: `${apiBaseUrl}/api/chat/stream`,
+      },
+      // Make PDF download work
       {
         source: "/api/download-pdf/:user/:phase",
         destination: `${apiBaseUrl}/api/download-pdf/:user/:phase`,
@@ -39,14 +49,8 @@ const nextConfig: NextConfig = {
       {
         source: "/api/:path*",
         destination: `${apiBaseUrl}/api/:path*`,
-      }
+      },
     ];
-  },
-  // Enable logging to help with debugging network issues
-  logging: {
-    fetches: {
-      fullUrl: true,
-    },
   },
 };
 

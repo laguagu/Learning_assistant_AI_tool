@@ -35,7 +35,7 @@ import {
   RefreshCw,
   Send,
   Settings,
-  UserIcon
+  UserIcon,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { startTransition, useEffect, useRef, useState } from "react";
@@ -255,16 +255,18 @@ export function Chat({ userId, onReady }: ChatProps) {
     const assistantIndex = messages.length + 1;
 
     try {
-      // STREAMING SOLUTION:
-      // 1. We receive the FULL markdown content with each update
-      // 2. We completely replace the message content each time (not append)
-      // 3. This ensures proper rendering of markdown elements like lists
-      // 4. We immediately update the UI with each new chunk
       await streamChatMessage(
         decodeURIComponent(userId),
         userInput,
         (chunk) => {
-          console.log(`[CHAT] Processing chunk of length: ${chunk.length}`);
+          console.log(`[CHAT] Processing chunk: ${chunk.substring(0, 20)}...`);
+
+          if (
+            chunk === "Thinking..." &&
+            messages[assistantIndex]?.content !== ""
+          ) {
+            return;
+          }
 
           // Update the message with each new chunk
           setMessages((prev) => {
@@ -283,7 +285,7 @@ export function Chat({ userId, onReady }: ChatProps) {
         }
       );
 
-      console.log("[CHAT] Stream completed successfully");
+      console.log("[CHAT] Response complete");
     } catch (error) {
       console.error("[CHAT] Error:", error);
       toast.error("Failed to send message. Please try again.");

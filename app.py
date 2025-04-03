@@ -646,9 +646,22 @@ async def chat_stream(user_id: str, message: str):
     if user_id not in user_datasets:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
     
+    # CORS- ja streaming-ystävälliset headerit
+    headers = {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        "Connection": "keep-alive",
+        "Transfer-Encoding": "chunked",
+        "X-Accel-Buffering": "no",  # Tärkeä Nginx-välityspalvelimille
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+    }
+    
     return StreamingResponse(
         stream_predict_for_user(user_id, message),
-        media_type="text/event-stream"
+        media_type="text/event-stream",
+        headers=headers
     )
 
 @app.post("/api/update-milestones")
