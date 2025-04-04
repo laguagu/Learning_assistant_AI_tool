@@ -7,7 +7,6 @@ import { API_URL } from "./config";
  * Fetches a list of all users with NO caching to ensure fresh data
  */
 export async function getUsers(): Promise<string[]> {
-  console.log("api url:", API_URL);
 
   try {
     // Force dynamic fetching with no caching

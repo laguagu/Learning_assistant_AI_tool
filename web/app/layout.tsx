@@ -26,7 +26,20 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Learning Assistant AI Tool",
-  description: "An AI-powered learning assistant application",
+  description: "UPBEAT - learning assistant",
+  openGraph: {
+    title: "Learning Assistant AI Tool",
+    description: "UPBEAT - learning assistant",
+    images: [
+      {
+        url: "/HH_logo_2020.png",
+        width: 1200,
+        height: 630,
+        alt: "Learning Assistant AI Tool Logo",
+      },
+    ],
+    type: "website",
+  },
 };
 
 export default function RootLayout({
