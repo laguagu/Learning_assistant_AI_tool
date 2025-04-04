@@ -33,9 +33,8 @@ import {
   Folder,
   Loader2,
   RefreshCw,
-  Save,
   Send,
-  UserIcon,
+  UserIcon
 } from "lucide-react";
 import { motion } from "motion/react";
 import { startTransition, useEffect, useRef, useState } from "react";
@@ -324,8 +323,8 @@ export function Chat({ userId, onReady }: ChatProps) {
                 size="sm"
                 className="flex items-center gap-1"
               >
-                <Save className="h-4 w-4" />
-                <span>Save</span>
+                <Folder className="h-4 w-4" />
+                <span>Manage Chats</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
