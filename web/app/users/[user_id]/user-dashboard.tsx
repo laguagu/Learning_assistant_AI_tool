@@ -1,10 +1,12 @@
 "use client";
 
-import { Chat } from "@/components/chat";
+import { FeatureGatedChat } from "@/components/feature-gated-chat";
+import { FeatureGatedOptionsMenu } from "@/components/feature-gated-options-menu";
 import HomeButton from "@/components/home-button";
 import { MarkdownPlanViewer } from "@/components/markdown-plan-viewer";
 import { Milestones } from "@/components/milestones";
-import { OptionsMenu } from "@/components/options-menu";
+import { ModuleSection } from "@/components/module-section";
+import { Quiz } from "@/components/quiz";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +18,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { downloadPdf } from "@/lib/api/api";
+import { isQuizEnabled } from "@/lib/features";
 import type { UserData } from "@/lib/types";
 import {
   BookOpen,
@@ -26,7 +29,6 @@ import {
   Presentation,
   Route,
   Sparkles,
-  Telescope,
   User,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -48,6 +50,7 @@ export default function UserDashboard({
   const [activeTab, setActiveTab] = useState("plan");
   const chatRef = useRef<{ resetChat?: () => void }>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [quizCompleted, setQuizCompleted] = useState(false);
 
   // Get the correct plan text based on selected phase
   const currentPlanText =
@@ -79,9 +82,40 @@ export default function UserDashboard({
     }
   }, []);
 
+  // Check if quiz has been completed on initial load
+  useEffect(() => {
+    if (isQuizEnabled()) {
+      const checkQuizStatus = async () => {
+        try {
+          const response = await fetch(
+            `/api/quiz/status?userId=${encodeURIComponent(userId)}`
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            setQuizCompleted(data.completed);
+          }
+        } catch (error) {
+          console.error("Failed to check quiz status:", error);
+        }
+      };
+
+      checkQuizStatus();
+    }
+  }, [userId]);
+
   // Extract user name from data or fallback to email username
   const userName =
     (userData.data["Q1. Full Name"] as string) || displayEmail.split("@")[0];
+
+  // Handle quiz completion
+  const handleQuizComplete = useCallback(
+    (responses: Record<string, string>) => {
+      setQuizCompleted(true);
+      toast.success("Learning preferences saved successfully!");
+    },
+    []
+  );
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -89,12 +123,15 @@ export default function UserDashboard({
       // Alt+1, Alt+2, Alt+3 for tab switching
       if (e.altKey) {
         if (e.key === "1") {
-          setActiveTab("plan");
+          setActiveTab("modules");
           e.preventDefault();
         } else if (e.key === "2") {
-          setActiveTab("chat");
+          setActiveTab("plan");
           e.preventDefault();
         } else if (e.key === "3") {
+          setActiveTab("chat");
+          e.preventDefault();
+        } else if (e.key === "4") {
           setActiveTab("milestones");
           e.preventDefault();
         }
@@ -205,11 +242,19 @@ export default function UserDashboard({
               </Tooltip>
 
               <div className="mt-2 sm:mt-0">
-                <OptionsMenu userId={userId} onResetChat={handleResetChat} />
+                <FeatureGatedOptionsMenu
+                  userId={userId}
+                  onResetChat={handleResetChat}
+                />
               </div>
             </div>
           </div>
         </motion.div>
+
+        {/* Show Quiz component if enabled and not yet completed */}
+        {isQuizEnabled() && !quizCompleted && (
+          <Quiz userId={userId} onComplete={handleQuizComplete} />
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
@@ -261,13 +306,21 @@ export default function UserDashboard({
 
                   <div className="p-3 sm:p-4">
                     <h3 className="text-xs sm:text-sm font-medium mb-2 sm:mb-3 text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                      <Telescope
-                        className="h-3 w-3 sm:h-3.5 sm:w-3.5"
-                        aria-hidden="true"
-                      />
                       Navigation
                     </h3>
                     <TabsList className="flex flex-col w-full h-auto space-y-1 bg-transparent">
+                      <TabsTrigger
+                        value="modules"
+                        className="justify-start w-full text-xs sm:text-sm py-1.5 sm:py-2 bg-background data-[state=active]:bg-primary/10"
+                        aria-label="Learning Modules tab"
+                      >
+                        <BookOpen
+                          className="h-3.5 w-3.5 mr-2"
+                          aria-hidden="true"
+                        />
+                        Learning Modules
+                        <span className="sr-only">(Alt+1)</span>
+                      </TabsTrigger>
                       <TabsTrigger
                         value="plan"
                         className="justify-start w-full text-xs sm:text-sm py-1.5 sm:py-2 bg-background data-[state=active]:bg-primary/10"
@@ -278,7 +331,7 @@ export default function UserDashboard({
                           aria-hidden="true"
                         />
                         Learning Plan
-                        <span className="sr-only">(Alt+1)</span>
+                        <span className="sr-only">(Alt+2)</span>
                       </TabsTrigger>
                       <TabsTrigger
                         value="chat"
@@ -290,7 +343,7 @@ export default function UserDashboard({
                           aria-hidden="true"
                         />
                         Chat Assistant
-                        <span className="sr-only">(Alt+2)</span>
+                        <span className="sr-only">(Alt+3)</span>
                       </TabsTrigger>
                       <TabsTrigger
                         value="milestones"
@@ -302,7 +355,7 @@ export default function UserDashboard({
                           aria-hidden="true"
                         />
                         Milestones
-                        <span className="sr-only">(Alt+3)</span>
+                        <span className="sr-only">(Alt+4)</span>
                       </TabsTrigger>
                     </TabsList>
                   </div>
@@ -312,12 +365,16 @@ export default function UserDashboard({
 
             {/* Main content area - adjust content based on active tab */}
             <div className="col-span-1 md:col-span-3">
+              <TabsContent value="modules" className="m-0">
+                <ModuleSection userId={userId} />
+              </TabsContent>
+
               <TabsContent value="plan" className="m-0">
                 <MarkdownPlanViewer markdown={currentPlanText} />
               </TabsContent>
 
               <TabsContent value="chat" className="m-0">
-                <Chat
+                <FeatureGatedChat
                   userId={userId}
                   onReady={(methods) => {
                     chatRef.current = methods;

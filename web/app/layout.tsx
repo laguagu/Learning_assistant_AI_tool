@@ -1,3 +1,5 @@
+// app/layout.tsx
+import { getFeatureFlags } from "@/lib/features";
 import type { Metadata } from "next";
 import { Geist_Mono, Inter, Outfit } from "next/font/google";
 import { Toaster } from "react-hot-toast";
@@ -47,11 +49,24 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Get feature flags for server-side rendering
+  const featureFlags = getFeatureFlags();
+
   return (
     <html
       lang="en"
       className={`${inter.variable} ${outfit.variable} ${geistMono.variable}`}
     >
+      <head>
+        {/* Inject feature flags for client-side access */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__FEATURE_FLAGS__ = ${JSON.stringify(
+              featureFlags
+            )};`,
+          }}
+        />
+      </head>
       <body className="antialiased">
         <div className="relative z-10 min-h-screen">{children}</div>
         <Toaster />

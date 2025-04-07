@@ -1,8 +1,9 @@
+// components/chat.tsx
 "use client";
 
 import type React from "react";
 
-import { Markdown } from "@/components/markdown"; // Import your custom Markdown component
+import { Markdown } from "@/components/markdown";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,7 +35,7 @@ import {
   Loader2,
   RefreshCw,
   Send,
-  UserIcon
+  UserIcon,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { startTransition, useEffect, useRef, useState } from "react";
@@ -64,7 +65,8 @@ const suggestedQuestions = [
   },
 ];
 
-interface ChatProps {
+// Export ChatProps interface so it can be imported by other components
+export interface ChatProps {
   userId: string;
   onReady?: (methods: { resetChat: () => void }) => void;
 }
@@ -505,7 +507,6 @@ export function Chat({ userId, onReady }: ChatProps) {
                               className="prose prose-zinc prose-sm prose-headings:my-2 
                                       prose-ul:pl-5 prose-ol:pl-5 prose-li:pl-1 prose-li:my-0 
                                       max-w-none w-full dark:prose-invert"
-                              debugMode={true} // Always enable debug mode to help diagnose issues
                             >
                               {msg.content}
                             </Markdown>
