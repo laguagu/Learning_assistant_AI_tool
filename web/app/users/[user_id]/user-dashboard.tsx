@@ -2,7 +2,6 @@
 
 import { FeatureGatedChat } from "@/components/feature-gated-chat";
 import { FeatureGatedOptionsMenu } from "@/components/feature-gated-options-menu";
-import HomeButton from "@/components/home-button";
 import { MarkdownPlanViewer } from "@/components/markdown-plan-viewer";
 import { Milestones } from "@/components/milestones";
 import { ModuleSection } from "@/components/module-section";
@@ -160,8 +159,6 @@ export default function UserDashboard({
   return (
     <TooltipProvider>
       <div className="container mx-auto py-4 sm:py-8 px-3 sm:px-4">
-        {/* Home Button */}
-        <HomeButton />
 
         {/* User header section - with improved backdrop blur effect */}
         <motion.div

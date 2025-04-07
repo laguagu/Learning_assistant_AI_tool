@@ -1,4 +1,5 @@
 // app/layout.tsx
+import HomeButton from "@/components/buttons";
 import { getFeatureFlags } from "@/lib/features";
 import type { Metadata } from "next";
 import { Geist_Mono, Inter, Outfit } from "next/font/google";
@@ -72,6 +73,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
+        <HomeButton />
         <div className="relative z-10 min-h-screen">{children}</div>
         <Toaster />
       </body>

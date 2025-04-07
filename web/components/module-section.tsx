@@ -19,6 +19,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
 import useSWR from "swr";
 
@@ -34,6 +35,7 @@ interface Module {
 
 interface ModuleSectionProps {
   userId: string;
+  userEmail?: string; // Optional: if provided, will be used for routing
 }
 
 // Fetcher function for SWR
@@ -58,8 +60,11 @@ const fetchCompletedModules = async (userId: string) => {
   }
 };
 
-export function ModuleSection({ userId }: ModuleSectionProps) {
+export function ModuleSection({ userId, userEmail }: ModuleSectionProps) {
   const router = useRouter();
+  // If userEmail is not provided, use a default value
+  const email = userEmail || "anil.tampere@example.com";
+  const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
 
   // Use SWR for data fetching with automatic revalidation
   const {
@@ -70,11 +75,12 @@ export function ModuleSection({ userId }: ModuleSectionProps) {
     fetchCompletedModules(userId)
   );
 
-  const loading = !completedModules && !error;
+  const loading = (!completedModules && !error) || !!isSubmitting;
 
   // Function to mark a module as complete via Supabase
   const completeModule = async (moduleId: string) => {
     try {
+      setIsSubmitting(moduleId);
       const { success, error } = await markModuleAsComplete(userId, moduleId);
 
       if (!success) {
@@ -83,18 +89,27 @@ export function ModuleSection({ userId }: ModuleSectionProps) {
       }
 
       // Revalidate data
-      mutate();
+      await mutate(
+        // Optimistically update the local data
+        completedModules ? [...completedModules, moduleId] : [moduleId],
+        {
+          revalidate: true, // Force revalidation from the server
+        }
+      );
 
       toast.success("Module marked as complete!");
     } catch (error) {
       console.error("Failed to mark module as complete:", error);
       toast.error("Failed to update progress");
+    } finally {
+      setIsSubmitting(null);
     }
   };
 
   // Function to mark a module as uncomplete via Supabase
   const uncompleteModule = async (moduleId: string) => {
     try {
+      setIsSubmitting(moduleId);
       const { success, error } = await markModuleAsUncomplete(userId, moduleId);
 
       if (!success) {
@@ -102,13 +117,17 @@ export function ModuleSection({ userId }: ModuleSectionProps) {
         throw error;
       }
 
-      // Force a complete revalidation of the data
-      await mutate(undefined, { revalidate: true });
+      // Optimistically update the local data and force a revalidation
+      await mutate(completedModules?.filter((id) => id !== moduleId) || [], {
+        revalidate: true, // Force revalidation from the server
+      });
 
       toast.success("Module marked as incomplete!");
     } catch (error) {
       console.error("Failed to update module status:", error);
       toast.error("Failed to update progress");
+    } finally {
+      setIsSubmitting(null);
     }
   };
 
@@ -118,7 +137,8 @@ export function ModuleSection({ userId }: ModuleSectionProps) {
       return;
     }
 
-    router.push(`/modules/${module.id}`);
+    // Updated route to use the new URL structure with user email
+    router.push(`/users/${encodeURIComponent(email)}/modules/${module.id}`);
   };
 
   if (loading) {
@@ -213,7 +233,9 @@ export function ModuleSection({ userId }: ModuleSectionProps) {
             key={module.id}
             className={`transition-all ${
               !module.enabled ? "opacity-70" : ""
-            } hover:shadow-md`}
+            } hover:shadow-md ${
+              isSubmitting === module.id ? "opacity-70 pointer-events-none" : ""
+            }`}
           >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -285,9 +307,14 @@ export function ModuleSection({ userId }: ModuleSectionProps) {
                       variant="ghost"
                       size="sm"
                       onClick={() => uncompleteModule(module.id)}
-                      className="text-green-700 hover:text-green-800 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/40"
+                      className="text-green-700 hover:text-green-800 hover:bg-green-100 border  dark:text-green-400 dark:hover:bg-green-900/40"
+                      disabled={isSubmitting === module.id}
                     >
-                      <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                      {isSubmitting === module.id ? (
+                        <RefreshCw className="h-3.5 w-3.5 mr-1 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                      )}
                       Mark as incomplete
                     </Button>
                   </div>
@@ -299,8 +326,16 @@ export function ModuleSection({ userId }: ModuleSectionProps) {
                       variant="outline"
                       size="sm"
                       onClick={() => completeModule(module.id)}
+                      disabled={isSubmitting === module.id}
                     >
-                      Mark as complete
+                      {isSubmitting === module.id ? (
+                        <span className="flex items-center gap-1">
+                          <RefreshCw className="h-3.5 w-3.5 mr-1 animate-spin" />
+                          Processing...
+                        </span>
+                      ) : (
+                        "Mark as complete"
+                      )}
                     </Button>
                   </div>
                 )
