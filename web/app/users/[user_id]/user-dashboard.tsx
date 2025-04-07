@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/tooltip";
 import { downloadPdf } from "@/lib/api/api";
 import { isQuizEnabled } from "@/lib/features";
+import { checkQuizCompletion, saveQuizResponses } from "@/lib/supabase/queries";
 import type { UserData } from "@/lib/types";
 import {
   BookOpen,
@@ -51,6 +52,7 @@ export default function UserDashboard({
   const chatRef = useRef<{ resetChat?: () => void }>({});
   const [isLoading, setIsLoading] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [isQuizLoading, setIsQuizLoading] = useState(true);
 
   // Get the correct plan text based on selected phase
   const currentPlanText =
@@ -82,25 +84,26 @@ export default function UserDashboard({
     }
   }, []);
 
-  // Check if quiz has been completed on initial load
+  // Check if quiz has been completed on initial load using Supabase
   useEffect(() => {
     if (isQuizEnabled()) {
-      const checkQuizStatus = async () => {
+      const fetchQuizStatus = async () => {
         try {
-          const response = await fetch(
-            `/api/quiz/status?userId=${encodeURIComponent(userId)}`
-          );
-
-          if (response.ok) {
-            const data = await response.json();
-            setQuizCompleted(data.completed);
+          setIsQuizLoading(true);
+          const { completed, error } = await checkQuizCompletion(userId);
+          if (error) {
+            console.error("Error checking quiz status:", error);
+          } else {
+            setQuizCompleted(completed);
           }
         } catch (error) {
           console.error("Failed to check quiz status:", error);
+        } finally {
+          setIsQuizLoading(false);
         }
       };
 
-      checkQuizStatus();
+      fetchQuizStatus();
     }
   }, [userId]);
 
@@ -108,13 +111,25 @@ export default function UserDashboard({
   const userName =
     (userData.data["Q1. Full Name"] as string) || displayEmail.split("@")[0];
 
-  // Handle quiz completion
+  // Handle quiz completion - now using Supabase
   const handleQuizComplete = useCallback(
-    (responses: Record<string, string>) => {
-      setQuizCompleted(true);
-      toast.success("Learning preferences saved successfully!");
+    async (responses: Record<string, string>) => {
+      try {
+        const { success, error } = await saveQuizResponses(userId, responses);
+
+        if (success) {
+          setQuizCompleted(true);
+          toast.success("Learning preferences saved successfully!");
+        } else {
+          console.error("Error saving quiz responses:", error);
+          toast.error("Failed to save learning preferences");
+        }
+      } catch (err) {
+        console.error("Failed to save quiz responses:", err);
+        toast.error("Failed to save learning preferences");
+      }
     },
-    []
+    [userId]
   );
 
   // Handle keyboard shortcuts
@@ -251,8 +266,8 @@ export default function UserDashboard({
           </div>
         </motion.div>
 
-        {/* Show Quiz component if enabled and not yet completed */}
-        {isQuizEnabled() && !quizCompleted && (
+        {/* Show Quiz component if enabled, not yet completed, and not loading */}
+        {isQuizEnabled() && !isQuizLoading && !quizCompleted && (
           <Quiz userId={userId} onComplete={handleQuizComplete} />
         )}
 

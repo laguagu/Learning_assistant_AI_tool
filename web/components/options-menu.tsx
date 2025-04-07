@@ -1,6 +1,6 @@
+// components/feature-gated-options-menu.tsx
 "use client";
 
-import { loadAgentSettingsAction, updateAgentSettingsAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -12,16 +12,32 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { API_URL } from "@/lib/api/config";
+import { isOptionsMenuEnabled } from "@/lib/features";
 import { Loader2, Settings } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 
 interface OptionsMenuProps {
   userId: string;
-  onResetChat?: () => void; 
+  onResetChat?: () => void;
 }
 
-export function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
+export function FeatureGatedOptionsMenu({
+  userId,
+  onResetChat,
+}: OptionsMenuProps) {
+  // Check if the options menu feature is enabled
+  if (!isOptionsMenuEnabled()) {
+    return null;
+  }
+
+  // If enabled, render the actual OptionsMenu component
+  return <OptionsMenu userId={userId} onResetChat={onResetChat} />;
+}
+
+// The actual OptionsMenu component
+function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
@@ -38,15 +54,20 @@ export function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
   const handleButtonClick = async () => {
     setButtonLoading(true);
     try {
-      // Get settings before opening dialog
-      const result = await loadAgentSettingsAction(userId, false);
-      
-      if (!result.success) {
-        throw new Error(result.error || "Failed to load settings");
+      // Get settings from API
+      const response = await fetch(
+        `${API_URL}/api/reset-agent-settings?user_id=${encodeURIComponent(
+          userId
+        )}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to load settings");
       }
-      
-      if (result.settings) {
-        const settings = result.settings;
+
+      const data = await response.json();
+      if (data.success && data.settings) {
+        const settings = data.settings;
         setSystemPrompt(settings.system_prompt || "");
         setTemperature(settings.temperature || 0.3);
         setUsePlanTool(!!settings.use_plan_tool);
@@ -54,8 +75,8 @@ export function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
         setUseLearningMaterialTool(!!settings.use_learningmaterial_tool);
         setUseMilestonesTool(!!settings.use_milestones_tool);
       }
-      
-      // Only open the dialog when settings are loaded
+
+      // Open the dialog
       setOpen(true);
     } catch (error) {
       console.error("Failed to load settings:", error);
@@ -65,46 +86,43 @@ export function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
     }
   };
 
-  // Load settings when dialog opens
-  const handleOpen = async (isOpen: boolean) => {
-    if (!isOpen) {
-      setOpen(false);
-      return;
-    }
-    
-    // If dialog is being closed, just close it
-    if (!isOpen) {
-      setOpen(false);
-      return;
-    }
-    
-    // For opening, the data is already loaded in handleButtonClick
-    // so we don't need to load it again
-  };
-
-  // Save settings using server action
+  // Save settings using API
   const handleSaveSettings = async () => {
     try {
       setLoading(true);
-      const result = await updateAgentSettingsAction(userId, {
-        system_prompt: systemPrompt,
-        temperature: parseFloat(temperature.toString()),
-        use_plan_tool: usePlanTool,
-        use_search_tool: useSearchTool,
-        use_learningmaterial_tool: useLearningMaterialTool,
-        use_milestones_tool: useMilestonesTool,
+
+      // Call the API to update settings
+      const response = await fetch(`${API_URL}/api/update-agent-settings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          system_prompt: systemPrompt,
+          temperature: temperature,
+          use_plan_tool: usePlanTool,
+          use_search_tool: useSearchTool,
+          use_learningmaterial_tool: useLearningMaterialTool,
+          use_milestones_tool: useMilestonesTool,
+        }),
       });
-      
-      if (!result.success) {
-        throw new Error(result.error || "Failed to update settings");
+
+      if (!response.ok) {
+        throw new Error("Failed to update settings");
       }
-      
-      toast.success("Settings updated successfully");
-      setOpen(false);
-      
-      // Reset chat if function is provided
-      if (onResetChat) {
-        onResetChat();
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success("Settings updated successfully");
+        setOpen(false);
+
+        // Reset chat if function is provided
+        if (onResetChat) {
+          onResetChat();
+        }
+      } else {
+        throw new Error(data.error || "Failed to update settings");
       }
     } catch (error) {
       console.error("Failed to update settings:", error);
@@ -114,18 +132,26 @@ export function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
     }
   };
 
-  // Reset settings using server action
+  // Reset settings to defaults
   const handleResetSettings = async () => {
     try {
       setLoading(true);
-      const result = await loadAgentSettingsAction(userId, true);
-      
-      if (!result.success) {
-        throw new Error(result.error || "Failed to reset settings");
+
+      // Call the API to reset settings
+      const response = await fetch(
+        `${API_URL}/api/reset-agent-settings?user_id=${encodeURIComponent(
+          userId
+        )}&reset=true`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to reset settings");
       }
 
-      if (result.settings) {
-        const settings = result.settings;
+      const data = await response.json();
+
+      if (data.success && data.settings) {
+        const settings = data.settings;
         setSystemPrompt(settings.system_prompt || "");
         setTemperature(settings.temperature || 0.3);
         setUsePlanTool(!!settings.use_plan_tool);
@@ -133,11 +159,13 @@ export function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
         setUseLearningMaterialTool(!!settings.use_learningmaterial_tool);
         setUseMilestonesTool(!!settings.use_milestones_tool);
         toast.success("Settings reset to defaults");
-        
+
         // Reset chat if function is provided
         if (onResetChat) {
           onResetChat();
         }
+      } else {
+        throw new Error(data.error || "Failed to reset settings");
       }
     } catch (error) {
       console.error("Failed to reset settings:", error);
@@ -169,7 +197,7 @@ export function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
         )}
       </Button>
 
-      <Dialog open={open} onOpenChange={handleOpen}>
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>LLM Assistant Options</DialogTitle>

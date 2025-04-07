@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Learning Assistant AI Tool
 
-## Getting Started
+A web-based learning assistant tool built with Next.js that uses Supabase for backend services and authentication.
 
-First, run the development server:
+## Overview
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+This learning assistant helps users track their progress through educational modules and provides interactive features like quizzes and milestones.
+
+## Technology Stack
+
+- **Frontend**: Next.js
+- **Backend Services**: Supabase
+- **Styling**: Tailwind CSS
+- **Deployment Options**: Local and Rahti environments
+
+## Setup Instructions
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   pnpm install
+   ```
+3. Configure environment variables by creating a `.env.local` file based on the template
+4. Run the development server:
+   ```bash
+   pnpm dev
+   ```
+
+## Environment Configuration
+
+The application uses environment variables for configuration. See `.env.local` for a template with the required variables.
+
+## Feature Flags
+
+The application uses a feature flag system to enable or disable specific features. These can be configured through environment variables:
+
+### Module Access Flags
+
+| Flag     | Environment Variable | Default | Description                              |
+| -------- | -------------------- | ------- | ---------------------------------------- |
+| Module 1 | `ENABLE_MODULE_1`    | `true`  | First module (always enabled by default) |
+| Module 2 | `ENABLE_MODULE_2`    | `false` | Second module                            |
+| Module 3 | `ENABLE_MODULE_3`    | `false` | Third module                             |
+| Module 4 | `ENABLE_MODULE_4`    | `false` | Fourth module                            |
+
+### Component Flags
+
+| Flag           | Environment Variable    | Default | Description                           |
+| -------------- | ----------------------- | ------- | ------------------------------------- |
+| Chat Assistant | `ENABLE_CHAT_ASSISTANT` | `false` | Enables the AI chat assistant feature |
+| Options Menu   | `ENABLE_OPTIONS_MENU`   | `false` | Enables the advanced options menu     |
+
+### Feature Flags
+
+| Flag | Environment Variable | Default | Description                    |
+| ---- | -------------------- | ------- | ------------------------------ |
+| Quiz | `ENABLE_QUIZ`        | `true`  | Enables the quiz functionality |
+
+## Accessing Feature Flags in Code
+
+Feature flags can be accessed in the code using the helper functions from the `lib/features.ts` file:
+
+```typescript
+import {
+  isModuleEnabled,
+  isChatAssistantEnabled,
+  isQuizEnabled,
+} from "@/lib/features";
+
+// Check if a specific module is enabled
+if (isModuleEnabled(1)) {
+  // Module 1 specific code
+}
+
+// Check if the chat assistant is enabled
+if (isChatAssistantEnabled()) {
+  // Render chat assistant
+}
+
+// Check if quizzes are enabled
+if (isQuizEnabled()) {
+  // Show quiz functionality
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deployment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The application can be deployed in different environments:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Local**: For development purposes
+- **Rahti**: For production deployment
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js appv is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Set the `DEPLOYMENT_ENV` environment variable accordingly.

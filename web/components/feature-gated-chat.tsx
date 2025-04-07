@@ -23,9 +23,11 @@ export const FeatureGatedChat: React.FC<ChatProps> = (props) => {
         <CardContent className="flex-1 flex items-center justify-center">
           <div className="text-center p-6 max-w-md">
             <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-xl font-semibold mb-2">Chat Assistant Unavailable</h3>
+            <h3 className="text-xl font-semibold mb-2">
+              Chat Assistant Unavailable
+            </h3>
             <p className="text-muted-foreground">
-              The chat assistant feature is currently disabled. It will be available in a future update.
+              The chat assistant feature is currently disabled.
             </p>
           </div>
         </CardContent>

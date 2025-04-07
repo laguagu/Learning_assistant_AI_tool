@@ -1,4 +1,3 @@
-// components/module-section.tsx
 "use client";
 
 import { Badge } from "@/components/ui/badge";
@@ -6,10 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isModuleEnabled } from "@/lib/features";
-import { ArrowRight, BookOpen, Calendar, CheckCircle, Lock } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import {
+  markModuleAsComplete,
+  markModuleAsUncomplete,
+} from "@/lib/supabase/queries";
+import {
+  ArrowRight,
+  BookOpen,
+  Calendar,
+  CheckCircle,
+  Lock,
+  RefreshCw,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import useSWR from "swr";
 
 interface Module {
   id: string;
@@ -25,81 +36,88 @@ interface ModuleSectionProps {
   userId: string;
 }
 
+// Fetcher function for SWR
+const fetchCompletedModules = async (userId: string) => {
+  try {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from("module_progress")
+      .select("module_id")
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("Error fetching from Supabase:", error);
+      return [];
+    }
+
+    return data ? data.map((item) => item.module_id) : [];
+  } catch (error) {
+    console.error("Failed to fetch modules:", error);
+    return [];
+  }
+};
+
 export function ModuleSection({ userId }: ModuleSectionProps) {
-  const [modules, setModules] = useState<Module[]>([]);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    async function fetchModules() {
-      try {
-        // Fetch user's progress from the database
-        const response = await fetch(`/api/modules/progress?userId=${encodeURIComponent(userId)}`);
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch module progress");
-        }
-        
-        const progressData = await response.json();
-        
-        // Construct the modules list with enabled/disabled status
-        const modulesList: Module[] = [
-          {
-            id: "module1",
-            number: 1,
-            title: "Understanding AI basics",
-            description: "Learn fundamental technologies and ecosystems of AI and their relevance to business.",
-            enabled: isModuleEnabled(1),
-            completed: progressData.completed?.includes("module1") || false,
-            dueDate: "April 14, 2025"
-          },
-          {
-            id: "module2",
-            number: 2,
-            title: "AI for Business Planning",
-            description: "Using AI tools to clarify business ideas, perform market analysis, and create customer personas.",
-            enabled: isModuleEnabled(2),
-            completed: progressData.completed?.includes("module2") || false,
-            dueDate: "April 21, 2025"
-          },
-          {
-            id: "module3",
-            number: 3,
-            title: "Business Prompting Workshop",
-            description: "Apply structured prompts for business impact and learn to assess AI tools.",
-            enabled: isModuleEnabled(3),
-            completed: progressData.completed?.includes("module3") || false,
-            dueDate: "April 28, 2025"
-          },
-          {
-            id: "module4",
-            number: 4,
-            title: "AI for Business Success",
-            description: "Use AI tools for strategic marketing and customer engagement.",
-            enabled: isModuleEnabled(4),
-            completed: progressData.completed?.includes("module4") || false,
-            dueDate: "May 5, 2025"
-          },
-        ];
-        
-        setModules(modulesList);
-      } catch (error) {
-        console.error("Failed to fetch modules:", error);
-        toast.error("Failed to load modules");
-      } finally {
-        setLoading(false);
+  // Use SWR for data fetching with automatic revalidation
+  const {
+    data: completedModules,
+    error,
+    mutate,
+  } = useSWR(`completed-modules-${userId}`, () =>
+    fetchCompletedModules(userId)
+  );
+
+  const loading = !completedModules && !error;
+
+  // Function to mark a module as complete via Supabase
+  const completeModule = async (moduleId: string) => {
+    try {
+      const { success, error } = await markModuleAsComplete(userId, moduleId);
+
+      if (!success) {
+        console.error("Error saving module progress:", error);
+        throw error;
       }
+
+      // Revalidate data
+      mutate();
+
+      toast.success("Module marked as complete!");
+    } catch (error) {
+      console.error("Failed to mark module as complete:", error);
+      toast.error("Failed to update progress");
     }
-    
-    fetchModules();
-  }, [userId]);
+  };
+
+  // Function to mark a module as uncomplete via Supabase
+  const uncompleteModule = async (moduleId: string) => {
+    try {
+      const { success, error } = await markModuleAsUncomplete(userId, moduleId);
+
+      if (!success) {
+        console.error("Error removing module progress:", error);
+        throw error;
+      }
+
+      // Force a complete revalidation of the data
+      await mutate(undefined, { revalidate: true });
+
+      toast.success("Module marked as incomplete!");
+    } catch (error) {
+      console.error("Failed to update module status:", error);
+      toast.error("Failed to update progress");
+    }
+  };
 
   const handleModuleClick = (module: Module) => {
     if (!module.enabled) {
       toast.error(`Module ${module.number} is not yet available`);
       return;
     }
-    
+
     router.push(`/modules/${module.id}`);
   };
 
@@ -122,10 +140,56 @@ export function ModuleSection({ userId }: ModuleSectionProps) {
     );
   }
 
+  // Define the modules with their completion status
+  const modules: Module[] = [
+    {
+      id: "module1",
+      number: 1,
+      title: "Understanding AI basics",
+      description:
+        "Learn fundamental technologies and ecosystems of AI and their relevance to business.",
+      enabled: isModuleEnabled(1),
+      completed: completedModules?.includes("module1") || false,
+      dueDate: "April 14, 2025",
+    },
+    {
+      id: "module2",
+      number: 2,
+      title: "AI for Business Planning",
+      description:
+        "Using AI tools to clarify business ideas, perform market analysis, and create customer personas.",
+      enabled: isModuleEnabled(2),
+      completed: completedModules?.includes("module2") || false,
+      dueDate: "April 21, 2025",
+    },
+    {
+      id: "module3",
+      number: 3,
+      title: "Business Prompting Workshop",
+      description:
+        "Apply structured prompts for business impact and learn to assess AI tools.",
+      enabled: isModuleEnabled(3),
+      completed: completedModules?.includes("module3") || false,
+      dueDate: "April 28, 2025",
+    },
+    {
+      id: "module4",
+      number: 4,
+      title: "AI for Business Success",
+      description:
+        "Use AI tools for strategic marketing and customer engagement.",
+      enabled: isModuleEnabled(4),
+      completed: completedModules?.includes("module4") || false,
+      dueDate: "May 5, 2025",
+    },
+  ];
+
   // Calculate completed modules
-  const completedCount = modules.filter(m => m.completed).length;
-  const totalEnabledCount = modules.filter(m => m.enabled).length;
-  const progressPercentage = totalEnabledCount ? Math.round((completedCount / totalEnabledCount) * 100) : 0;
+  const completedCount = modules.filter((m) => m.completed).length;
+  const totalEnabledCount = modules.filter((m) => m.enabled).length;
+  const progressPercentage = totalEnabledCount
+    ? Math.round((completedCount / totalEnabledCount) * 100)
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -135,17 +199,17 @@ export function ModuleSection({ userId }: ModuleSectionProps) {
           <span className="text-sm font-medium">Progress:</span>
           <span className="text-lg font-bold">{progressPercentage}%</span>
           <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-primary rounded-full" 
+            <div
+              className="h-full bg-primary rounded-full"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
         </div>
       </div>
-      
+
       <div className="grid gap-4">
         {modules.map((module) => (
-          <Card 
+          <Card
             key={module.id}
             className={`transition-all ${
               !module.enabled ? "opacity-70" : ""
@@ -153,7 +217,10 @@ export function ModuleSection({ userId }: ModuleSectionProps) {
           >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <Badge variant={module.enabled ? "default" : "outline"} className="text-xs w-fit">
+                <Badge
+                  variant={module.enabled ? "default" : "outline"}
+                  className="text-xs w-fit"
+                >
                   Module {module.number}
                 </Badge>
                 <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
@@ -167,7 +234,7 @@ export function ModuleSection({ userId }: ModuleSectionProps) {
                   {module.title}
                 </CardTitle>
               </div>
-              
+
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 {module.dueDate && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -176,32 +243,67 @@ export function ModuleSection({ userId }: ModuleSectionProps) {
                   </div>
                 )}
                 <Button
-                  variant={module.completed ? "outline" : module.enabled ? "default" : "secondary"}
+                  variant={
+                    module.completed
+                      ? "outline"
+                      : module.enabled
+                      ? "default"
+                      : "secondary"
+                  }
                   size="sm"
                   disabled={!module.enabled}
                   onClick={() => handleModuleClick(module)}
-                  className={module.completed ? "bg-green-50 border-green-200 text-green-700 hover:text-green-800 hover:bg-green-100" : ""}
+                  className={
+                    module.completed
+                      ? "bg-green-50 border-green-200 text-green-700 hover:text-green-800 hover:bg-green-100"
+                      : ""
+                  }
                 >
                   {module.completed ? (
                     "Review"
                   ) : module.enabled ? (
-                    <span className="flex items-center gap-1">Start <ArrowRight className="h-4 w-4" /></span>
+                    <span className="flex items-center gap-1">
+                      Start <ArrowRight className="h-4 w-4" />
+                    </span>
                   ) : (
                     "Coming Soon"
                   )}
                 </Button>
               </div>
             </CardHeader>
-            
+
             <CardContent>
               <p className="text-muted-foreground">{module.description}</p>
-              
-              {module.completed && (
+
+              {module.completed ? (
                 <div className="mt-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-100 dark:border-green-900/30">
-                  <p className="text-sm text-green-700 dark:text-green-400">
-                    You've successfully completed this module!
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-green-700 dark:text-green-400">
+                      You've successfully completed this module!
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => uncompleteModule(module.id)}
+                      className="text-green-700 hover:text-green-800 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/40"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                      Mark as incomplete
+                    </Button>
+                  </div>
                 </div>
+              ) : (
+                module.enabled && (
+                  <div className="mt-2 flex justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => completeModule(module.id)}
+                    >
+                      Mark as complete
+                    </Button>
+                  </div>
+                )
               )}
             </CardContent>
           </Card>

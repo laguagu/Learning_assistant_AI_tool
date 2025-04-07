@@ -51,6 +51,10 @@ export default function RootLayout({
 }>) {
   // Get feature flags for server-side rendering
   const featureFlags = getFeatureFlags();
+  
+  // Set default values per your requirements
+  featureFlags.components.chatAssistant = process.env.ENABLE_CHAT_ASSISTANT === "true" ? true : false;
+  featureFlags.components.optionsMenu = process.env.ENABLE_OPTIONS_MENU === "true" ? true : false;
 
   return (
     <html

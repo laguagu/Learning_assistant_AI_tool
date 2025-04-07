@@ -52,8 +52,8 @@ export function getFeatureFlags(): FeatureFlags {
       module4: false,
     },
     components: {
-      chatAssistant: true,
-      optionsMenu: true,
+      chatAssistant: false, // Disabled by default as requested
+      optionsMenu: false, // Disabled by default as requested
     },
     quiz: {
       enabled: true,
