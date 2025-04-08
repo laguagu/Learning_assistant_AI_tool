@@ -6,10 +6,10 @@ import { cn } from "@/lib/utils";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import React, { useState } from "react";
 
-interface PasswordInputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {}
-
-export function PasswordInput({ className, ...props }: PasswordInputProps) {
+export function PasswordInput({ 
+  className, 
+  ...props 
+}: React.InputHTMLAttributes<HTMLInputElement>) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (

@@ -56,7 +56,7 @@ export function BackButton() {
 }
 
 export function LogoutButton() {
-  const [_, formAction, isPending] = useActionState(logoutUser, null);
+  const [, formAction, isPending] = useActionState(logoutUser, null);
 
   return (
     <form action={formAction}>
