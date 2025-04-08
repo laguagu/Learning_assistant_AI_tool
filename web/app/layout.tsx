@@ -59,7 +59,7 @@ export default function RootLayout({
 
   return (
     <html
-      lang="en"
+      lang="en "
       className={`${inter.variable} ${outfit.variable} ${geistMono.variable}`}
     >
       <head>

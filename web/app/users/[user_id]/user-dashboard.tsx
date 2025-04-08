@@ -1,39 +1,24 @@
 "use client";
 
+import { LogoutButton } from "@/components/buttons";
 import { FeatureGatedChat } from "@/components/feature-gated-chat";
-import { FeatureGatedOptionsMenu } from "@/components/feature-gated-options-menu";
-import { MarkdownPlanViewer } from "@/components/markdown-plan-viewer";
 import { Milestones } from "@/components/milestones";
 import { ModuleSection } from "@/components/module-section";
-import { Quiz } from "@/components/quiz";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { downloadPdf } from "@/lib/api/api";
-import { isQuizEnabled } from "@/lib/features";
-import { checkQuizCompletion, saveQuizResponses } from "@/lib/supabase/queries";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import type { UserData } from "@/lib/types";
 import {
   BookOpen,
-  Download,
   Layout,
   Mail,
   MessageSquare,
-  Presentation,
-  Route,
   Sparkles,
-  User,
+  User
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "react-hot-toast";
+import { useRef, useState } from "react";
 
 interface UserDashboardProps {
   userData: UserData;
@@ -46,120 +31,48 @@ export default function UserDashboard({
   currentPhase,
   userId,
 }: UserDashboardProps) {
-  const [selectedPhase, setSelectedPhase] = useState<number>(currentPhase);
-  const [activeTab, setActiveTab] = useState("plan");
+  // const [selectedPhase, setSelectedPhase] = useState<number>(currentPhase);
+  const [activeTab, setActiveTab] = useState("modules");
   const chatRef = useRef<{ resetChat?: () => void }>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [quizCompleted, setQuizCompleted] = useState(false);
-  const [isQuizLoading, setIsQuizLoading] = useState(true);
+  // const [isLoading, setIsLoading] = useState(false);
 
-  // Get the correct plan text based on selected phase
-  const currentPlanText =
-    selectedPhase === 1
-      ? userData.smart_plan_phase1
-      : userData.smart_plan_phase2;
+  // // Get the correct plan text based on selected phase
+  // const currentPlanText =
+  //   selectedPhase === 1
+  //     ? userData.smart_plan_phase1
+  //     : userData.smart_plan_phase2;
 
   // Decode email for display to fix the '%40' issue
   const displayEmail = decodeURIComponent(userId);
 
   // Handle PDF download with loading state
-  const handleDownload = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      await downloadPdf(userId, selectedPhase);
-      toast.success("PDF downloaded successfully");
-    } catch (error) {
-      console.error("Download error:", error);
-      toast.error("Failed to download PDF");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId, selectedPhase]);
+  // const handleDownload = useCallback(async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     await downloadPdf(userId, selectedPhase);
+  //     toast.success("PDF downloaded successfully");
+  //   } catch (error) {
+  //     console.error("Download error:", error);
+  //     toast.error("Failed to download PDF");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }, [userId, selectedPhase]);
 
-  // Handle chat reset for the Options menu
-  const handleResetChat = useCallback(() => {
-    if (chatRef.current.resetChat) {
-      chatRef.current.resetChat();
-    }
-  }, []);
-
-  // Check if quiz has been completed on initial load using Supabase
-  useEffect(() => {
-    if (isQuizEnabled()) {
-      const fetchQuizStatus = async () => {
-        try {
-          setIsQuizLoading(true);
-          const { completed, error } = await checkQuizCompletion(userId);
-          if (error) {
-            console.error("Error checking quiz status:", error);
-          } else {
-            setQuizCompleted(completed);
-          }
-        } catch (error) {
-          console.error("Failed to check quiz status:", error);
-        } finally {
-          setIsQuizLoading(false);
-        }
-      };
-
-      fetchQuizStatus();
-    }
-  }, [userId]);
+  // // Handle chat reset for the Options menu
+  // const handleResetChat = useCallback(() => {
+  //   if (chatRef.current.resetChat) {
+  //     chatRef.current.resetChat();
+  //   }
+  // }, []);
 
   // Extract user name from data or fallback to email username
   const userName =
     (userData.data["Q1. Full Name"] as string) || displayEmail.split("@")[0];
 
-  // Handle quiz completion - now using Supabase
-  const handleQuizComplete = useCallback(
-    async (responses: Record<string, string>) => {
-      try {
-        const { success, error } = await saveQuizResponses(userId, responses);
-
-        if (success) {
-          setQuizCompleted(true);
-          toast.success("Learning preferences saved successfully!");
-        } else {
-          console.error("Error saving quiz responses:", error);
-          toast.error("Failed to save learning preferences");
-        }
-      } catch (err) {
-        console.error("Failed to save quiz responses:", err);
-        toast.error("Failed to save learning preferences");
-      }
-    },
-    [userId]
-  );
-
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Alt+1, Alt+2, Alt+3 for tab switching
-      if (e.altKey) {
-        if (e.key === "1") {
-          setActiveTab("modules");
-          e.preventDefault();
-        } else if (e.key === "2") {
-          setActiveTab("plan");
-          e.preventDefault();
-        } else if (e.key === "3") {
-          setActiveTab("chat");
-          e.preventDefault();
-        } else if (e.key === "4") {
-          setActiveTab("milestones");
-          e.preventDefault();
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
   return (
     <TooltipProvider>
       <div className="container mx-auto py-4 sm:py-8 px-3 sm:px-4">
-
         {/* User header section - with improved backdrop blur effect */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -191,8 +104,13 @@ export default function UserDashboard({
             </div>
           </div>
 
+          {/* Add logout button in the header */}
+          <div className="flex items-center">
+            <LogoutButton />
+          </div>
+
           {/* Mobile-friendly action buttons */}
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          {/* <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -260,13 +178,8 @@ export default function UserDashboard({
                 />
               </div>
             </div>
-          </div>
+          </div> */}
         </motion.div>
-
-        {/* Show Quiz component if enabled, not yet completed, and not loading */}
-        {isQuizEnabled() && !isQuizLoading && !quizCompleted && (
-          <Quiz userId={userId} onComplete={handleQuizComplete} />
-        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
@@ -327,12 +240,13 @@ export default function UserDashboard({
                         aria-label="Learning Modules tab"
                       >
                         <BookOpen
-                          className="h-3.5 w-3.5 mr-2"
+                          className="h-3.5 w-3.5 mr-2 flex-shrink-0"
                           aria-hidden="true"
                         />
-                        Learning Modules
+                        <span className="truncate">Learning Modules</span>
                         <span className="sr-only">(Alt+1)</span>
                       </TabsTrigger>
+                      {/* Learning Plan tab commented out - no longer used
                       <TabsTrigger
                         value="plan"
                         className="justify-start w-full text-xs sm:text-sm py-1.5 sm:py-2 bg-background data-[state=active]:bg-primary/10"
@@ -345,16 +259,17 @@ export default function UserDashboard({
                         Learning Plan
                         <span className="sr-only">(Alt+2)</span>
                       </TabsTrigger>
+                      */}
                       <TabsTrigger
                         value="chat"
                         className="justify-start w-full text-xs sm:text-sm py-1.5 sm:py-2 bg-background data-[state=active]:bg-primary/10"
                         aria-label="Chat Assistant tab"
                       >
                         <MessageSquare
-                          className="h-3.5 w-3.5 mr-2"
+                          className="h-3.5 w-3.5 mr-2 flex-shrink-0"
                           aria-hidden="true"
                         />
-                        Chat Assistant
+                        <span className="truncate">Chat Assistant</span>
                         <span className="sr-only">(Alt+3)</span>
                       </TabsTrigger>
                       <TabsTrigger
@@ -363,12 +278,17 @@ export default function UserDashboard({
                         aria-label="Milestones tab"
                       >
                         <Sparkles
-                          className="h-3.5 w-3.5 mr-2"
+                          className="h-3.5 w-3.5 mr-2 flex-shrink-0"
                           aria-hidden="true"
                         />
-                        Milestones
+                        <span className="truncate">Milestones</span>
                         <span className="sr-only">(Alt+4)</span>
                       </TabsTrigger>
+
+                      {/* Logout button in the navigation menu */}
+                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
+                        <LogoutButton />
+                      </div>
                     </TabsList>
                   </div>
                 </CardContent>
@@ -381,9 +301,11 @@ export default function UserDashboard({
                 <ModuleSection userId={userId} />
               </TabsContent>
 
+              {/* Plan tab content commented out - no longer used
               <TabsContent value="plan" className="m-0">
                 <MarkdownPlanViewer markdown={currentPlanText} />
               </TabsContent>
+              */}
 
               <TabsContent value="chat" className="m-0">
                 <FeatureGatedChat

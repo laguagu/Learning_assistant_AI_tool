@@ -91,3 +91,11 @@ The application can be deployed in different environments:
 - **Rahti**: For production deployment
 
 Set the `DEPLOYMENT_ENV` environment variable accordingly.
+
+users
+id_username: "anil.tampere@example.com",
+id_username: "sara.espoo@example.com",
+id_username: "oksana.tallinn@example.com",
+id_username: "ivan.tartu@example.com",
+id_username: "sophia.helsinki@example.com",
+id_username: "miguel.turku@example.com",

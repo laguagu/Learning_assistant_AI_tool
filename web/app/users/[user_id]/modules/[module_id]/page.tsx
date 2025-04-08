@@ -1,4 +1,4 @@
-import { BackButton, CompleteButton } from "@/components/buttons";
+import { BackButton } from "@/components/buttons";
 import { ModuleContentAccordion } from "@/components/module-content-accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getModuleContent } from "@/lib/data/study-plans";
@@ -31,7 +31,9 @@ export default async function Page({
       <div className="mb-12">
         <Card className="shadow-sm">
           <CardHeader className="bg-primary/5 border-b border-primary/10 py-6">
-            <CardTitle className="text-2xl text-center">{moduleContent.title}</CardTitle>
+            <CardTitle className="text-2xl text-center">
+              {moduleContent.title}
+            </CardTitle>
           </CardHeader>
           <CardContent className="py-6 px-6 md:px-8 lg:px-10">
             <div className="my-4 mx-auto">
@@ -42,10 +44,6 @@ export default async function Page({
             </div>
           </CardContent>
         </Card>
-
-        <div className="mt-8 flex justify-center md:justify-end">
-          <CompleteButton email={user_id} module_id={module_id} />
-        </div>
       </div>
     </div>
   );

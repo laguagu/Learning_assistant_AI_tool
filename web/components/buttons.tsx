@@ -1,17 +1,17 @@
 "use client";
 
+import { logoutUser } from "@/app/(auth)/login-actions";
 import { Button } from "@/components/ui/button";
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ChevronLeft, Home } from "lucide-react";
+import { ChevronLeft, Home, LogOut } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // Changed from next/router to next/navigation
-import { useState } from "react";
-import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { useActionState } from "react";
 
 export default function HomeButton() {
   return (
@@ -55,29 +55,21 @@ export function BackButton() {
   );
 }
 
-interface CompleteButtonProps {
-  email: string;
-  module_id: string;
-}
-
-export function CompleteButton({ email, module_id }: CompleteButtonProps) {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleComplete = () => {
-    setIsLoading(true);
-
-    // Simulate saving - no actual saving here
-    setTimeout(() => {
-      toast.success("Module marked as completed!");
-      router.push(`/users/${email}`);
-      setIsLoading(false);
-    }, 1000);
-  };
+export function LogoutButton() {
+  const [_, formAction, isPending] = useActionState(logoutUser, null);
 
   return (
-    <Button onClick={handleComplete} disabled={isLoading}>
-      {isLoading ? "Marking as completed..." : "Mark as completed"}
-    </Button>
+    <form action={formAction}>
+      <Button
+        type="submit"
+        variant="outline"
+        size="sm"
+        disabled={isPending}
+        className="flex items-center gap-1"
+      >
+        <LogOut className="h-4 w-4" />
+        <span>{isPending ? "Logging out..." : "Logout"}</span>
+      </Button>
+    </form>
   );
 }

@@ -5,6 +5,7 @@ export interface FeatureFlags {
     module2: boolean;
     module3: boolean;
     module4: boolean;
+    module5: boolean;
   };
   components: {
     chatAssistant: boolean;
@@ -27,6 +28,7 @@ export function getFeatureFlags(): FeatureFlags {
         module2: process.env.ENABLE_MODULE_2 === "true",
         module3: process.env.ENABLE_MODULE_3 === "true",
         module4: process.env.ENABLE_MODULE_4 === "true",
+        module5: process.env.ENABLE_MODULE_5 === "true",
       },
       components: {
         chatAssistant: process.env.ENABLE_CHAT_ASSISTANT !== "false", // Enabled by default
@@ -50,6 +52,7 @@ export function getFeatureFlags(): FeatureFlags {
       module2: false,
       module3: false,
       module4: false,
+      module5: false,
     },
     components: {
       chatAssistant: false, // Disabled by default as requested
@@ -83,6 +86,8 @@ export function isModuleEnabled(moduleNumber: number): boolean {
       return flags.modules.module3;
     case 4:
       return flags.modules.module4;
+    case 5:
+      return flags.modules.module5;
     default:
       return false;
   }

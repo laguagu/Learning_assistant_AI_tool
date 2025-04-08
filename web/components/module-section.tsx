@@ -144,6 +144,12 @@ export function ModuleSection({ userId, userEmail }: ModuleSectionProps) {
   if (loading) {
     return (
       <div className="space-y-4">
+        <Card className="opacity-70 mb-4">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <Skeleton className="h-6 w-52" />
+            <Skeleton className="h-8 w-28" />
+          </CardHeader>
+        </Card>
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="opacity-70">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -202,6 +208,16 @@ export function ModuleSection({ userId, userEmail }: ModuleSectionProps) {
       completed: completedModules?.includes("module4") || false,
       dueDate: "May 5, 2025",
     },
+    {
+      id: "module5",
+      number: 5,
+      title: "AI Hackathon Challenge",
+      description:
+        "Apply your AI skills in a collaborative hackathon to solve real business challenges and showcase your solutions.",
+      enabled: isModuleEnabled(5),
+      completed: completedModules?.includes("module5") || false,
+      dueDate: "May 12, 2025",
+    },
   ];
 
   // Calculate completed modules
@@ -213,19 +229,21 @@ export function ModuleSection({ userId, userEmail }: ModuleSectionProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold">Learning Modules</h2>
-        <div className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-md">
-          <span className="text-sm font-medium">Progress:</span>
-          <span className="text-lg font-bold">{progressPercentage}%</span>
-          <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full"
-              style={{ width: `${progressPercentage}%` }}
-            />
+      <Card className="mb-2">
+        <CardHeader className="flex flex-row items-center justify-between pb-4">
+          <CardTitle className="text-2xl font-bold">Learning Modules</CardTitle>
+          <div className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-md">
+            <span className="text-sm font-medium">Progress:</span>
+            <span className="text-lg font-bold">{progressPercentage}%</span>
+            <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
           </div>
-        </div>
-      </div>
+        </CardHeader>
+      </Card>
 
       <div className="grid gap-4">
         {modules.map((module) => (
@@ -301,7 +319,7 @@ export function ModuleSection({ userId, userEmail }: ModuleSectionProps) {
                 <div className="mt-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-100 dark:border-green-900/30">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-green-700 dark:text-green-400">
-                      You've successfully completed this module!
+                      You&apos;ve successfully completed this module!
                     </p>
                     <Button
                       variant="ghost"

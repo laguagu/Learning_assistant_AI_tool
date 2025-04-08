@@ -29,17 +29,25 @@ export function ModuleContentAccordion({
 
   // Custom components for ReactMarkdown
   const components: Components = {
-    a: ({ children, ...props }) => (
-      <a
-        {...props}
-        className="text-blue-500 hover:text-blue-700 inline-flex items-center gap-1 transition-colors font-medium"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {children}
-        <ExternalLink className="h-3.5 w-3.5 inline" />
-      </a>
-    ),
+    a: ({ href, children, ...props }) => {
+      if (!href) return <>{children}</>;
+
+      return (
+        <a
+          href={href}
+          {...props}
+          className="text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1 transition-colors font-medium break-words"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {children}
+          <ExternalLink
+            className="h-3.5 w-3.5 inline-block flex-shrink-0"
+            aria-hidden="true"
+          />
+        </a>
+      );
+    },
     ul: ({ children, ...props }) => (
       <ul {...props} className="list-disc pl-5 my-3 space-y-1">
         {children}
@@ -54,6 +62,12 @@ export function ModuleContentAccordion({
       <li {...props} className="ml-2">
         {children}
       </li>
+    ),
+    // Add support for paragraphs with URLs
+    p: ({ children, ...props }) => (
+      <p {...props} className="my-2 break-words">
+        {children}
+      </p>
     ),
   };
 
