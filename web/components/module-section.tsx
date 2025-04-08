@@ -279,7 +279,7 @@ export function ModuleSection({ userId, userEmail }: ModuleSectionProps) {
                 {module.dueDate && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Calendar className="h-3 w-3" />
-                    <span>Due: {module.dueDate}</span>
+                    <span>Available: {module.dueDate}</span>
                   </div>
                 )}
                 <Button

@@ -15,7 +15,7 @@ import {
   Mail,
   MessageSquare,
   Sparkles,
-  User
+  User,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useRef, useState } from "react";
@@ -284,11 +284,6 @@ export default function UserDashboard({
                         <span className="truncate">Milestones</span>
                         <span className="sr-only">(Alt+4)</span>
                       </TabsTrigger>
-
-                      {/* Logout button in the navigation menu */}
-                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
-                        <LogoutButton />
-                      </div>
                     </TabsList>
                   </div>
                 </CardContent>
