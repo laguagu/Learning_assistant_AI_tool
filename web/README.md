@@ -4,7 +4,7 @@ A web-based learning assistant tool built with Next.js that uses Supabase for ba
 
 ## Overview
 
-This learning assistant helps users track their progress through educational modules and provides interactive features like quizzes and milestones.
+This learning assistant helps users track their progress through educational modules and provides interactive features like milestones.
 
 ## Technology Stack
 
@@ -50,22 +50,12 @@ The application uses a feature flag system to enable or disable specific feature
 | Chat Assistant | `ENABLE_CHAT_ASSISTANT` | `false` | Enables the AI chat assistant feature |
 | Options Menu   | `ENABLE_OPTIONS_MENU`   | `false` | Enables the advanced options menu     |
 
-### Feature Flags
-
-| Flag | Environment Variable | Default | Description                    |
-| ---- | -------------------- | ------- | ------------------------------ |
-| Quiz | `ENABLE_QUIZ`        | `true`  | Enables the quiz functionality |
-
 ## Accessing Feature Flags in Code
 
 Feature flags can be accessed in the code using the helper functions from the `lib/features.ts` file:
 
 ```typescript
-import {
-  isModuleEnabled,
-  isChatAssistantEnabled,
-  isQuizEnabled,
-} from "@/lib/features";
+import { isModuleEnabled, isChatAssistantEnabled } from "@/lib/features";
 
 // Check if a specific module is enabled
 if (isModuleEnabled(1)) {
@@ -75,11 +65,6 @@ if (isModuleEnabled(1)) {
 // Check if the chat assistant is enabled
 if (isChatAssistantEnabled()) {
   // Render chat assistant
-}
-
-// Check if quizzes are enabled
-if (isQuizEnabled()) {
-  // Show quiz functionality
 }
 ```
 

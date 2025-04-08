@@ -11,9 +11,6 @@ export interface FeatureFlags {
     chatAssistant: boolean;
     optionsMenu: boolean;
   };
-  quiz: {
-    enabled: boolean;
-  };
 }
 
 /**
@@ -33,9 +30,6 @@ export function getFeatureFlags(): FeatureFlags {
       components: {
         chatAssistant: process.env.ENABLE_CHAT_ASSISTANT !== "false", // Enabled by default
         optionsMenu: process.env.ENABLE_OPTIONS_MENU !== "false", // Enabled by default
-      },
-      quiz: {
-        enabled: process.env.ENABLE_QUIZ !== "false", // Enabled by default
       },
     };
   }
@@ -57,9 +51,6 @@ export function getFeatureFlags(): FeatureFlags {
     components: {
       chatAssistant: false, // Disabled by default as requested
       optionsMenu: false, // Disabled by default as requested
-    },
-    quiz: {
-      enabled: true,
     },
   };
 }
@@ -99,8 +90,4 @@ export function isChatAssistantEnabled(): boolean {
 
 export function isOptionsMenuEnabled(): boolean {
   return getFeatureFlags().components.optionsMenu;
-}
-
-export function isQuizEnabled(): boolean {
-  return getFeatureFlags().quiz.enabled;
 }
