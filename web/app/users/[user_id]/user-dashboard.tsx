@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { isChatAssistantEnabled } from "@/lib/features";
 import type { UserData } from "@/lib/types";
 import {
   BookOpen,
@@ -44,7 +45,7 @@ export default function UserDashboard({
 
   // Decode email for display to fix the '%40' issue
   const displayEmail = decodeURIComponent(userId);
-
+  const chatEnabled = isChatAssistantEnabled();
   // Handle PDF download with loading state
   // const handleDownload = useCallback(async () => {
   //   try {
@@ -260,18 +261,20 @@ export default function UserDashboard({
                         <span className="sr-only">(Alt+2)</span>
                       </TabsTrigger>
                       */}
-                      <TabsTrigger
-                        value="chat"
-                        className="justify-start w-full text-xs sm:text-sm py-1.5 sm:py-2 bg-background data-[state=active]:bg-primary/10"
-                        aria-label="Chat Assistant tab"
-                      >
-                        <MessageSquare
-                          className="h-3.5 w-3.5 mr-2 flex-shrink-0"
-                          aria-hidden="true"
-                        />
-                        <span className="truncate">Chat Assistant</span>
-                        <span className="sr-only">(Alt+3)</span>
-                      </TabsTrigger>
+                      {chatEnabled && (
+                        <TabsTrigger
+                          value="chat"
+                          className="justify-start w-full text-xs sm:text-sm py-1.5 sm:py-2 bg-background data-[state=active]:bg-primary/10"
+                          aria-label="Chat Assistant tab"
+                        >
+                          <MessageSquare
+                            className="h-3.5 w-3.5 mr-2 flex-shrink-0"
+                            aria-hidden="true"
+                          />
+                          <span className="truncate">Chat Assistant</span>
+                          <span className="sr-only">(Alt+3)</span>
+                        </TabsTrigger>
+                      )}
                       <TabsTrigger
                         value="milestones"
                         className="justify-start w-full text-xs sm:text-sm py-1.5 sm:py-2 bg-background data-[state=active]:bg-primary/10"
