@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
  */
 export async function updateMilestonesAction(
   userId: string,
-  milestones: boolean[]
+  milestones: boolean[],
 ) {
   try {
     const response = await fetch(`${API_URL}/api/update-milestones`, {
@@ -50,7 +50,7 @@ export async function downloadPdfAction(userId: string, phase: number) {
         method: "GET",
         // No cache to ensure we get the latest PDF
         cache: "no-store",
-      }
+      },
     );
 
     if (!response.ok) {
@@ -92,7 +92,7 @@ export async function streamChatAction(userId: string, message: string) {
 
     // Build the URL string with proper encoding
     const url = `${baseUrl}?user_id=${encodeURIComponent(
-      userId
+      userId,
     )}&message=${encodeURIComponent(message)}`;
 
     // Use Node.js fetch (server-side)
@@ -172,12 +172,12 @@ export async function streamChatAction(userId: string, message: string) {
  */
 export async function loadAgentSettingsAction(
   userId: string,
-  reset: boolean = false
+  reset: boolean = false,
 ) {
   try {
     // Use API_URL from config for consistent environment support
     const url = `${API_URL}/api/reset-agent-settings?user_id=${encodeURIComponent(
-      userId
+      userId,
     )}&reset=${reset}`;
 
     const response = await fetch(url, {
@@ -215,7 +215,7 @@ export async function updateAgentSettingsAction(
     use_search_tool: boolean;
     use_learningmaterial_tool: boolean;
     use_milestones_tool: boolean;
-  }
+  },
 ) {
   try {
     const response = await fetch(`${API_URL}/api/update-agent-settings`, {

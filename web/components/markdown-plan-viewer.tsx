@@ -107,7 +107,10 @@ export function MarkdownPlanViewer({
 
   // Custom components for ReactMarkdown
   const components: Components = {
-    a: ({ children, ...props }) => (
+    a: ({
+      children,
+      ...props
+    }: React.ComponentPropsWithoutRef<"a"> & { node?: any }) => (
       <a
         {...props}
         className="text-blue-500 hover:text-blue-700 inline-flex items-center gap-1 transition-colors font-medium"
@@ -118,17 +121,26 @@ export function MarkdownPlanViewer({
         <ExternalLink className="h-3.5 w-3.5 inline" />
       </a>
     ),
-    ul: ({ children, ...props }) => (
+    ul: ({
+      children,
+      ...props
+    }: React.ComponentPropsWithoutRef<"ul"> & { node?: any }) => (
       <ul {...props} className="list-disc pl-5 my-3 space-y-1">
         {children}
       </ul>
     ),
-    ol: ({ children, ...props }) => (
+    ol: ({
+      children,
+      ...props
+    }: React.ComponentPropsWithoutRef<"ol"> & { node?: any }) => (
       <ol {...props} className="list-decimal pl-5 my-3 space-y-1">
         {children}
       </ol>
     ),
-    li: ({ children, ...props }) => (
+    li: ({
+      children,
+      ...props
+    }: React.ComponentPropsWithoutRef<"li"> & { node?: any }) => (
       <li {...props} className="ml-2">
         {children}
       </li>

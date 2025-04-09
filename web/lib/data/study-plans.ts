@@ -26,7 +26,6 @@ export const studyPlans: StudyPlan[] = [
         content: `# Smart learning plan (onboarding)
 
 Dear Anil,
-
 Thank you for participating in our Entrepreneurship Training Course! Below is your plan to build the foundational skills you currently rate as beginner.
 
 ## Essential learning topics and materials
@@ -1293,15 +1292,19 @@ The hackathon will take place over 48 hours, during which you'll work collaborat
  */
 export function getModuleContent(
   email: string,
-  moduleId: string
+  moduleId: string,
 ): ModuleContent {
   const userPlan =
     studyPlans.find((plan) => plan.id_username === email) ||
     studyPlans.find((plan) => plan.id_username === "default");
 
-  const validModuleId = ["module1", "module2", "module3", "module4", "module5"].includes(
-    moduleId
-  )
+  const validModuleId = [
+    "module1",
+    "module2",
+    "module3",
+    "module4",
+    "module5",
+  ].includes(moduleId)
     ? (moduleId as keyof StudyPlan["modules"])
     : ("module1" as keyof StudyPlan["modules"]);
 

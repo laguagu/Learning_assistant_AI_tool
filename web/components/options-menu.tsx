@@ -57,8 +57,8 @@ function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
       // Get settings from API
       const response = await fetch(
         `${API_URL}/api/reset-agent-settings?user_id=${encodeURIComponent(
-          userId
-        )}`
+          userId,
+        )}`,
       );
 
       if (!response.ok) {
@@ -140,8 +140,8 @@ function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
       // Call the API to reset settings
       const response = await fetch(
         `${API_URL}/api/reset-agent-settings?user_id=${encodeURIComponent(
-          userId
-        )}&reset=true`
+          userId,
+        )}&reset=true`,
       );
 
       if (!response.ok) {

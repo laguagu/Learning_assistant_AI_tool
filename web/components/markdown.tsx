@@ -59,7 +59,7 @@ const CodeBlock = ({
         className={cn(
           "p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 overflow-x-auto",
           "text-sm leading-relaxed font-mono",
-          className
+          className,
         )}
       >
         <code className={language}>{children}</code>
@@ -141,7 +141,7 @@ const MarkdownComponents = {
       <code
         className={cn(
           "px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-sm font-mono",
-          className
+          className,
         )}
         {...props}
       >
@@ -159,7 +159,7 @@ const MarkdownComponents = {
     <ul
       className={cn(
         "my-2 ml-5 list-disc marker:text-zinc-500 space-y-1",
-        className
+        className,
       )}
       {...props}
     />
@@ -168,7 +168,7 @@ const MarkdownComponents = {
     <ol
       className={cn(
         "my-2 ml-5 list-decimal marker:text-zinc-500 space-y-1",
-        className
+        className,
       )}
       {...props}
     />
@@ -183,7 +183,7 @@ const MarkdownComponents = {
     <blockquote
       className={cn(
         "mt-4 border-l-4 border-zinc-300 pl-4 italic text-zinc-600 dark:border-zinc-700 dark:text-zinc-400",
-        className
+        className,
       )}
       {...props}
     />
@@ -196,7 +196,7 @@ const MarkdownComponents = {
     <a
       className={cn(
         "font-medium underline underline-offset-4 text-primary hover:text-primary/80",
-        className
+        className,
       )}
       href={href}
       target={href?.startsWith("http") ? "_blank" : undefined}
@@ -231,7 +231,7 @@ const MarkdownComponents = {
     <tr
       className={cn(
         "transition-colors hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50",
-        className
+        className,
       )}
       {...props}
     />
@@ -240,7 +240,7 @@ const MarkdownComponents = {
     <th
       className={cn(
         "border border-zinc-200 px-4 py-2 text-left font-bold dark:border-zinc-700",
-        className
+        className,
       )}
       {...props}
     />
@@ -249,7 +249,7 @@ const MarkdownComponents = {
     <td
       className={cn(
         "border border-zinc-200 px-4 py-2 dark:border-zinc-700",
-        className
+        className,
       )}
       {...props}
     />
@@ -268,7 +268,7 @@ const MarkdownComponents = {
     <img
       className={cn(
         "rounded-lg border border-zinc-200 dark:border-zinc-700",
-        className
+        className,
       )}
       alt={alt}
       {...props}
@@ -357,7 +357,7 @@ const NonMemoizedMarkdown: React.FC<MarkdownProps> = ({
       <div
         className={cn(
           "prose prose-zinc dark:prose-invert max-w-none",
-          className
+          className,
         )}
       >
         <ReactMarkdown
@@ -376,5 +376,5 @@ export const Markdown = React.memo(
   (prevProps, nextProps) =>
     prevProps.children === nextProps.children &&
     prevProps.className === nextProps.className &&
-    prevProps.debugMode === nextProps.debugMode
+    prevProps.debugMode === nextProps.debugMode,
 );

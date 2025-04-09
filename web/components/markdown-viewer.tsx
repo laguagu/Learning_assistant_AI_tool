@@ -8,7 +8,10 @@ interface MarkdownViewerProps {
   className?: string;
 }
 
-export function MarkdownViewer({ content, className = "" }: MarkdownViewerProps) {
+export function MarkdownViewer({
+  content,
+  className = "",
+}: MarkdownViewerProps) {
   return (
     <Card className={`overflow-hidden ${className}`}>
       <CardContent className="p-6 prose dark:prose-invert max-w-none">

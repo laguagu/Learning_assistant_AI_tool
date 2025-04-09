@@ -4,11 +4,11 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-    Dialog,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,10 +20,13 @@ import { toast } from "react-hot-toast";
 
 interface OptionsMenuProps {
   userId: string;
-  onResetChat?: () => void; 
+  onResetChat?: () => void;
 }
 
-export function FeatureGatedOptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
+export function FeatureGatedOptionsMenu({
+  userId,
+  onResetChat,
+}: OptionsMenuProps) {
   // Check if the options menu feature is enabled
   if (!isOptionsMenuEnabled()) {
     return null;
@@ -53,13 +56,13 @@ function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
     try {
       // Get settings from API
       const response = await fetch(
-        `${API_URL}/api/reset-agent-settings?user_id=${encodeURIComponent(userId)}`
+        `${API_URL}/api/reset-agent-settings?user_id=${encodeURIComponent(userId)}`,
       );
-      
+
       if (!response.ok) {
         throw new Error("Failed to load settings");
       }
-      
+
       const data = await response.json();
       if (data.success && data.settings) {
         const settings = data.settings;
@@ -70,7 +73,7 @@ function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
         setUseLearningMaterialTool(!!settings.use_learningmaterial_tool);
         setUseMilestonesTool(!!settings.use_milestones_tool);
       }
-      
+
       // Open the dialog
       setOpen(true);
     } catch (error) {
@@ -85,7 +88,7 @@ function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
   const handleSaveSettings = async () => {
     try {
       setLoading(true);
-      
+
       // Call the API to update settings
       const response = await fetch(`${API_URL}/api/update-agent-settings`, {
         method: "POST",
@@ -102,16 +105,16 @@ function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
           use_milestones_tool: useMilestonesTool,
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to update settings");
       }
-      
+
       const data = await response.json();
       if (data.success) {
         toast.success("Settings updated successfully");
         setOpen(false);
-        
+
         // Reset chat if function is provided
         if (onResetChat) {
           onResetChat();
@@ -131,18 +134,18 @@ function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
   const handleResetSettings = async () => {
     try {
       setLoading(true);
-      
+
       // Call the API to reset settings
       const response = await fetch(
-        `${API_URL}/api/reset-agent-settings?user_id=${encodeURIComponent(userId)}&reset=true`
+        `${API_URL}/api/reset-agent-settings?user_id=${encodeURIComponent(userId)}&reset=true`,
       );
-      
+
       if (!response.ok) {
         throw new Error("Failed to reset settings");
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success && data.settings) {
         const settings = data.settings;
         setSystemPrompt(settings.system_prompt || "");
@@ -152,7 +155,7 @@ function OptionsMenu({ userId, onResetChat }: OptionsMenuProps) {
         setUseLearningMaterialTool(!!settings.use_learningmaterial_tool);
         setUseMilestonesTool(!!settings.use_milestones_tool);
         toast.success("Settings reset to defaults");
-        
+
         // Reset chat if function is provided
         if (onResetChat) {
           onResetChat();

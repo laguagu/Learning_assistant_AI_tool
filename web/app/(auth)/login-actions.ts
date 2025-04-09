@@ -21,7 +21,7 @@ type State = {
 
 export async function loginUser(
   prevState: State | undefined,
-  formData: FormData
+  formData: FormData,
 ): Promise<State> {
   try {
     const validatedFields = LoginSchema.safeParse({
@@ -68,20 +68,20 @@ export async function loginUser(
 }
 
 export async function logoutUser() {
-    try {
-      const supabase = await createClient()
-      
-      // Sign out the user
-      await supabase.auth.signOut();
-      
-      // Revalidate all paths
-      revalidatePath("/", "layout");
-      
-      // Redirect to login page
-      redirect("/login");
-    } catch (error) {
-      console.error("Logout error:", error);
-      // Even if there's an error, try to redirect to login
-      redirect("/login");
-    }
+  try {
+    const supabase = await createClient();
+
+    // Sign out the user
+    await supabase.auth.signOut();
+
+    // Revalidate all paths
+    revalidatePath("/", "layout");
+
+    // Redirect to login page
+    redirect("/login");
+  } catch (error) {
+    console.error("Logout error:", error);
+    // Even if there's an error, try to redirect to login
+    redirect("/login");
   }
+}

@@ -7,7 +7,6 @@ import { API_URL } from "./config";
  * Fetches a list of all users with NO caching to ensure fresh data
  */
 export async function getUsers(): Promise<string[]> {
-
   try {
     // Force dynamic fetching with no caching
     const response = await fetch(`${API_URL}/api/users`, {
@@ -66,14 +65,14 @@ export async function getUserData(userId: string): Promise<UserData> {
  */
 export async function getStructuredLearningPlan(
   userId: string,
-  phase: number
+  phase: number,
 ): Promise<StructuredLearningPlan | string> {
   try {
     const response = await fetch(
       `${API_URL}/api/learning-plan/${userId}/${phase}/structured`,
       {
         cache: "no-store",
-      }
+      },
     );
 
     if (!response.ok) {
@@ -101,37 +100,42 @@ export async function getStructuredLearningPlan(
  */
 export async function downloadPdf(
   userId: string,
-  phase: number
+  phase: number,
 ): Promise<void> {
   try {
-    console.log("Downloading PDF using server action for", userId, "phase", phase);
-    
+    console.log(
+      "Downloading PDF using server action for",
+      userId,
+      "phase",
+      phase,
+    );
+
     // Use server action to download PDF - works in all environments
     const result = await downloadPdfAction(userId, phase);
-    
+
     if (!result.success) {
       console.error("Failed to download PDF:", result.error);
       throw new Error(result.error);
     }
-    
+
     // Create a blob from the PDF data
     if (!result.data) {
       throw new Error("PDF data is missing");
     }
     const pdfBlob = new Blob([result.data], { type: result.contentType });
-    
+
     // Create a URL for the blob
     const url = URL.createObjectURL(pdfBlob);
-    
+
     // Create a link to download the PDF
     const link = document.createElement("a");
     link.href = url;
     link.setAttribute("download", result.filename);
-    
+
     // Trigger download
     document.body.appendChild(link);
     link.click();
-    
+
     // Clean up
     document.body.removeChild(link);
     URL.revokeObjectURL(url);

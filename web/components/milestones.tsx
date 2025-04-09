@@ -32,11 +32,11 @@ export function Milestones({
   initialStates,
 }: MilestonesProps) {
   const [milestones, setMilestones] = useState<string[]>(
-    initialMilestones || []
+    initialMilestones || [],
   );
   const [states, setStates] = useState<boolean[]>(initialStates || []);
   const [originalStates, setOriginalStates] = useState<boolean[]>(
-    initialStates || []
+    initialStates || [],
   );
   const [loading, setLoading] = useState(!initialMilestones || !initialStates);
   const [saving, setSaving] = useState(false);
@@ -108,7 +108,7 @@ export function Milestones({
   useEffect(() => {
     if (originalStates.length === states.length) {
       const hasChanges = originalStates.some(
-        (state, index) => state !== states[index]
+        (state, index) => state !== states[index],
       );
       setChanged(hasChanges);
 

@@ -72,7 +72,7 @@ export function ModuleSection({ userId, userEmail }: ModuleSectionProps) {
     error,
     mutate,
   } = useSWR(`completed-modules-${userId}`, () =>
-    fetchCompletedModules(userId)
+    fetchCompletedModules(userId),
   );
 
   const loading = (!completedModules && !error) || !!isSubmitting;
@@ -94,7 +94,7 @@ export function ModuleSection({ userId, userEmail }: ModuleSectionProps) {
         completedModules ? [...completedModules, moduleId] : [moduleId],
         {
           revalidate: true, // Force revalidation from the server
-        }
+        },
       );
 
       toast.success("Module marked as complete!");
@@ -287,8 +287,8 @@ export function ModuleSection({ userId, userEmail }: ModuleSectionProps) {
                     module.completed
                       ? "outline"
                       : module.enabled
-                      ? "default"
-                      : "secondary"
+                        ? "default"
+                        : "secondary"
                   }
                   size="sm"
                   disabled={!module.enabled}

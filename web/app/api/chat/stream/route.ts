@@ -23,7 +23,7 @@ function iteratorToStream(iterator: AsyncIterator<Uint8Array>) {
 async function* fetchBackendStream(userId: string, message: string) {
   const textEncoder = new TextEncoder();
   const url = `${API_URL}/api/chat/stream?user_id=${encodeURIComponent(
-    userId
+    userId,
   )}&message=${encodeURIComponent(message)}`;
 
   try {
@@ -37,7 +37,7 @@ async function* fetchBackendStream(userId: string, message: string) {
 
       // Käsittele virhe ja palauta virheviesti SSE-muodossa
       yield textEncoder.encode(
-        `data: {"error": "Backend request failed with status ${response.status}"}\n\n`
+        `data: {"error": "Backend request failed with status ${response.status}"}\n\n`,
       );
       yield textEncoder.encode("data: [DONE]\n\n");
       return;
@@ -46,7 +46,7 @@ async function* fetchBackendStream(userId: string, message: string) {
     if (!response.body) {
       console.error("[ROUTE] No response body from backend");
       yield textEncoder.encode(
-        'data: {"error": "No response body from backend"}\n\n'
+        'data: {"error": "No response body from backend"}\n\n',
       );
       yield textEncoder.encode("data: [DONE]\n\n");
       return;
@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
   } catch (streamError) {
     console.error(
       "[ROUTE] Streaming approach failed, using fallback:",
-      streamError
+      streamError,
     );
 
     // Striimaus epäonnistui, käytä fallbackia
@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
         JSON.stringify({
           error: "Both streaming and fallback approaches failed",
         }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
+        { status: 500, headers: { "Content-Type": "application/json" } },
       );
     }
   }

@@ -280,7 +280,7 @@ export function Chat({ userId, onReady }: ChatProps) {
 
           // Scroll to ensure the latest content is visible
           setTimeout(scrollToBottom, 100);
-        }
+        },
       );
 
       console.log("[CHAT] Stream completed successfully");

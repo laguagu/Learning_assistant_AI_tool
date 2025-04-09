@@ -8,13 +8,13 @@ export type StreamChunkCallback = (chunk: string) => void;
 export async function streamChatMessage(
   userId: string,
   message: string,
-  onChunk: StreamChunkCallback
+  onChunk: StreamChunkCallback,
 ): Promise<void> {
   try {
     // Käytä paikallista Next.js Route Handleria proxyn sijaan
     // Tämä kiertää OpenShift/Rahti proxyn aiheuttamat ongelmat
     const url = `/api/chat/stream?user_id=${encodeURIComponent(
-      userId
+      userId,
     )}&message=${encodeURIComponent(message)}`;
 
     const response = await fetch(url, {

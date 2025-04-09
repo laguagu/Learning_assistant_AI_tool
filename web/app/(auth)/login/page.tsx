@@ -4,16 +4,17 @@ import { PasswordInput } from "@/components/password-input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { motion } from "motion/react";
+import Image from "next/image";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { loginUser } from "../login-actions";
@@ -64,7 +65,16 @@ export default function LoginPage() {
         variants={fadeInUp}
         className="flex flex-col w-full max-w-md px-4"
       >
-        <h1 className="text-4xl font-bold mb-8 text-center">UPBEAT</h1>
+        <div className="mb-8 flex justify-center">
+          <Image
+            src="/logo.png"
+            alt="UPBEAT Logo"
+            width={200}
+            height={80}
+            priority
+            className="object-contain"
+          />
+        </div>
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-2xl text-center">Sign in</CardTitle>

@@ -19,6 +19,7 @@ import {
   User,
 } from "lucide-react";
 import { motion } from "motion/react";
+import Image from "next/image";
 import { useRef, useState } from "react";
 
 interface UserDashboardProps {
@@ -102,6 +103,19 @@ export default function UserDashboard({
                   {currentPhase === 1 ? "Onboarding" : "Training"}
                 </span>
               </p>
+            </div>
+          </div>
+
+          {/* Center logo */}
+          <div className="hidden sm:flex flex-1 justify-center items-center">
+            <div className="relative h-20 w-72">
+              <Image
+                src="/upbeat.jpg"
+                alt="Upbeat Logo"
+                fill
+                style={{ objectFit: "contain" }}
+                priority
+              />
             </div>
           </div>
 

@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json(
         { error: "Missing userId parameter" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching module progress:", error);
     return NextResponse.json(
       { error: "Failed to fetch module progress" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     if (!userId || !moduleId) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     if (!isModuleEnabled(moduleNumber)) {
       return NextResponse.json(
         { error: "Module not enabled" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     console.error("Error updating module progress:", error);
     return NextResponse.json(
       { error: "Failed to update module progress" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

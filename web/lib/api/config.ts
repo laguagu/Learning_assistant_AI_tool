@@ -52,5 +52,4 @@ export { API_URL };
 //   hostname: typeof window !== 'undefined' ? window.location.hostname : 'server'
 // });
 
-  export { isDevelopment, isRahti, isServer };
-
+export { isDevelopment, isRahti, isServer };

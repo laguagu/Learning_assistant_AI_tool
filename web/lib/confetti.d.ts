@@ -25,7 +25,7 @@ declare module "canvas-confetti" {
     reset: () => void;
     create: (
       canvas: HTMLCanvasElement,
-      options?: { resize?: boolean; useWorker?: boolean }
+      options?: { resize?: boolean; useWorker?: boolean },
     ) => ConfettiFunction;
   };
 

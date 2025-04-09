@@ -69,7 +69,7 @@ export function useChatStorage(userId: string) {
   // Handle loading a saved chat
   const handleLoadChat = (
     chat: SavedChat,
-    onLoad: (messages: ChatMessage[]) => void
+    onLoad: (messages: ChatMessage[]) => void,
   ) => {
     onLoad(chat.messages);
     setSavedChatsDialogOpen(false);
