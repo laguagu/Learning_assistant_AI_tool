@@ -12,6 +12,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { ExternalLink, GraduationCap, Plus as PlusIcon } from "lucide-react";
 import ReactMarkdown, { Components } from "react-markdown";
+import type { Node } from "unist";
+
+// Define a type for markdown nodes
+type MarkdownNode = Node;
 
 interface MarkdownPlanViewerProps {
   markdown: string;
@@ -110,7 +114,7 @@ export function MarkdownPlanViewer({
     a: ({
       children,
       ...props
-    }: React.ComponentPropsWithoutRef<"a"> & { node?: any }) => (
+    }: React.ComponentPropsWithoutRef<"a"> & { node?: MarkdownNode }) => (
       <a
         {...props}
         className="text-blue-500 hover:text-blue-700 inline-flex items-center gap-1 transition-colors font-medium"
@@ -124,7 +128,7 @@ export function MarkdownPlanViewer({
     ul: ({
       children,
       ...props
-    }: React.ComponentPropsWithoutRef<"ul"> & { node?: any }) => (
+    }: React.ComponentPropsWithoutRef<"ul"> & { node?: MarkdownNode }) => (
       <ul {...props} className="list-disc pl-5 my-3 space-y-1">
         {children}
       </ul>
@@ -132,7 +136,7 @@ export function MarkdownPlanViewer({
     ol: ({
       children,
       ...props
-    }: React.ComponentPropsWithoutRef<"ol"> & { node?: any }) => (
+    }: React.ComponentPropsWithoutRef<"ol"> & { node?: MarkdownNode }) => (
       <ol {...props} className="list-decimal pl-5 my-3 space-y-1">
         {children}
       </ol>
@@ -140,7 +144,7 @@ export function MarkdownPlanViewer({
     li: ({
       children,
       ...props
-    }: React.ComponentPropsWithoutRef<"li"> & { node?: any }) => (
+    }: React.ComponentPropsWithoutRef<"li"> & { node?: MarkdownNode }) => (
       <li {...props} className="ml-2">
         {children}
       </li>

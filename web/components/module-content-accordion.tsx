@@ -9,6 +9,10 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink, Lightbulb } from "lucide-react";
 import ReactMarkdown, { Components } from "react-markdown";
+import type { Node } from "unist";
+
+// Define a type for markdown nodes
+type MarkdownNode = Node;
 
 export interface ModuleContentItem {
   title: string;
@@ -49,7 +53,7 @@ export function ModuleContentAccordion({
       href,
       children,
       ...props
-    }: React.ComponentPropsWithoutRef<"a"> & { node?: any }) => {
+    }: React.ComponentPropsWithoutRef<"a"> & { node?: MarkdownNode }) => {
       if (!href) return <>{children}</>;
 
       return (
@@ -204,9 +208,10 @@ function parseMarkdownSections(markdown: string) {
 
   while ((match = sectionRegex.exec(markdown)) !== null) {
     position++;
-    const headingLevel = match[1].length; // Count # symbols to determine heading level
+    // Store the heading level in a comment for documentation purposes
+    // const headingLevel = match[1].length; // Count # symbols to determine heading level
     const sectionTitle = match[2].trim();
-    let sectionContent = match[3].trim();
+    const sectionContent = match[3].trim();
 
     // Check if this is a heading without significant content
     // A heading with no content or just whitespace or with very short content (likely not a real section)
