@@ -1,48 +1,134 @@
-# Rahti notes
+# Rahti Notes
 
-1. build img: docker build -t upbeat .
-2. log in to Rahti 2 - Login command + docker login -u unused -p $(oc whoami -t) image-registry.apps.2.rahti.csc.fi
-3. Tag img: docker login -u unused -p $(oc whoami -t) image-registry.apps.2.rahti.csc.fi
-4. Push: docker push image-registry.apps.2.rahti.csc.fi/upbeat-apps/app-name:latest
+## Docker Image Build & Push
 
-Frontend img:
+1. Build image:
+
+```bash
+docker build -t upbeat .
+```
+
+2. Log in to Rahti 2:
+
+```bash
+# Login command +
+docker login -u unused -p $(oc whoami -t) image-registry.apps.2.rahti.csc.fi
+```
+
+3. Tag image:
+
+```bash
+docker tag upbeat image-registry.apps.2.rahti.csc.fi/upbeat-apps/upbeat:latest
+```
+
+4. Push:
+
+```bash
+docker push image-registry.apps.2.rahti.csc.fi/upbeat-apps/upbeat:latest
+```
+
+## Frontend image example
+
+```bash
 cd web
 docker tag upbeat image-registry.apps.2.rahti.csc.fi/upbeat-apps/upbeat:latest
 docker push image-registry.apps.2.rahti.csc.fi/upbeat-apps/upbeat:latest
+```
 
 ## Changing a Route Hostname in Rahti
 
-To change a hostname of an existing application in Rahti, you need to delete the old route and create a new one with your desired hostname. Follow these steps:
+To change a hostname of an existing application in Rahti, you need to delete the old route and create a new one with your desired hostname.
 
-## Step 1: Delete the existing route
+### Method 1: Using YAML (Recommended)
 
-```bash
-oc delete route <route-name> -n <namespace>
-```
+#### Step 1: Create a YAML file for the new route
 
-Replace `<route-name>` with your route name and `<namespace>` with your project name.
+Create a file called `new-route.yaml` with this content:
 
-## Step 2: Create a new route with your desired hostname
-
-```bash
-oc expose service <service-name> -n <namespace> --hostname=<custom-name>.2.rahtiapp.fi --port=<port> --tls-termination=edge --insecure-policy=Redirect
+```yaml
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: <route-name>
+  namespace: <namespace>
+  labels:
+    app: <app-name>
+    app.kubernetes.io/component: <app-name>
+    app.kubernetes.io/instance: <app-name>
+    app.kubernetes.io/name: <app-name>
+    app.kubernetes.io/part-of: <project-name>
+  annotations:
+    openshift.io/host.generated: "false"
+spec:
+  host: <custom-name>.2.rahtiapp.fi
+  to:
+    kind: Service
+    name: <service-name>
+    weight: 100
+  port:
+    targetPort: <port>-tcp
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
 ```
 
 Replace:
 
-- `<service-name>` with the name of your service
-- `<namespace>` with your project name
-- `<custom-name>` with your desired hostname prefix
-- `<port>` with the port your service uses (e.g., "3000-tcp")
+- `<route-name>`: Name for the route object
+- `<namespace>`: Your project namespace
+- `<app-name>`: Your application name
+- `<project-name>`: Your project name
+- `<custom-name>`: Your desired URL prefix
+- `<service-name>`: Name of the service this route connects to
+- `<port>`: Port number your service uses (e.g., 3000, 8080)
 
-## Example
+#### Step 2: Create the new route
 
 ```bash
-# Delete the old route
-oc delete route upbeat -n upbeat-apps
+oc create -f new-route.yaml
+```
 
-# Create a new route with a custom hostname
-oc expose service upbeat -n upbeat-apps --hostname=upbeat.2.rahtiapp.fi --port=3000-tcp --tls-termination=edge --insecure-policy=Redirect
+#### Step 3: Test the new route
+
+Visit your new URL to confirm it works correctly
+
+#### Step 4: Delete the old route if no longer needed
+
+```bash
+oc delete route <old-route-name> -n <namespace>
+```
+
+### Example
+
+For application "upbeat" with service name "upbeat" running on port 3000:
+
+```yaml
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: learning-assistant
+  namespace: upbeat-apps
+  labels:
+    app: upbeat
+    app.kubernetes.io/component: upbeat
+    app.kubernetes.io/instance: upbeat
+    app.kubernetes.io/name: upbeat
+    app.kubernetes.io/part-of: learning-assistant
+  annotations:
+    openshift.io/host.generated: "false"
+spec:
+  host: learning-assistant.2.rahtiapp.fi
+  to:
+    kind: Service
+    name: upbeat
+    weight: 100
+  port:
+    targetPort: 3000-tcp
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
 ```
 
 **Note:** Hostnames in Rahti must end with `.2.rahtiapp.fi` and the prefix must be unique across the Rahti environment.
