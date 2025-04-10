@@ -5,4 +5,4 @@
 
 
 Frontend img:
-docker tag upbeat-frontend image-registry.apps.2.rahti.csc.fi/upbeat-apps/upbeat-frontend:latest
+docker tag upbeat image-registry.apps.2.rahti.csc.fi/upbeat-apps/upbeat:latest
