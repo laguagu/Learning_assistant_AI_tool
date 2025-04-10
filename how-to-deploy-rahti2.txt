@@ -1,8 +1,10 @@
-1. build img: docker build -t upbeat-frontend .
+1. build img: docker build -t upbeat .
 2. log in to Rahti 2 - Login command + docker login -u unused -p $(oc whoami -t) image-registry.apps.2.rahti.csc.fi
 3. Tag img: docker login -u unused -p $(oc whoami -t) image-registry.apps.2.rahti.csc.fi
 4. Push: docker push image-registry.apps.2.rahti.csc.fi/upbeat-apps/app-name:latest
 
 
 Frontend img:
+cd web
 docker tag upbeat image-registry.apps.2.rahti.csc.fi/upbeat-apps/upbeat:latest
+docker push image-registry.apps.2.rahti.csc.fi/upbeat-apps/upbeat:latest
