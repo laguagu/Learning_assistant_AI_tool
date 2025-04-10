@@ -2,42 +2,37 @@
 
 ## Docker Image Build & Push
 
-1. Build image:
-
+1. Build image: 
 ```bash
 docker build -t upbeat .
 ```
 
-2. Log in to Rahti 2:
-
+2. Log in to Rahti 2: 
 ```bash
-# Login command +
+# Login command + 
 docker login -u unused -p $(oc whoami -t) image-registry.apps.2.rahti.csc.fi
 ```
 
-3. Tag image:
-
+3. Tag image: 
 ```bash
 docker tag upbeat image-registry.apps.2.rahti.csc.fi/upbeat-apps/upbeat:latest
 ```
 
-4. Push:
-
+4. Push: 
 ```bash
 docker push image-registry.apps.2.rahti.csc.fi/upbeat-apps/upbeat:latest
 ```
 
-## Frontend image example
-
+## Frontend image example:
 ```bash
 cd web
 docker tag upbeat image-registry.apps.2.rahti.csc.fi/upbeat-apps/upbeat:latest
 docker push image-registry.apps.2.rahti.csc.fi/upbeat-apps/upbeat:latest
 ```
 
-## Changing a Route Hostname in Rahti
+## Changing a Route Hostname in Rahti (Public-URL)
 
-To change a hostname of an existing application in Rahti, you need to delete the old route and create a new one with your desired hostname.
+To add a new hostname or change a hostname of an existing application in Rahti, you can create a new route while keeping existing routes active. Multiple routes can point to the same service with different hostnames.
 
 ### Method 1: Using YAML (Recommended)
 
@@ -58,7 +53,7 @@ metadata:
     app.kubernetes.io/name: <app-name>
     app.kubernetes.io/part-of: <project-name>
   annotations:
-    openshift.io/host.generated: "false"
+    openshift.io/host.generated: 'false'
 spec:
   host: <custom-name>.2.rahtiapp.fi
   to:
@@ -74,7 +69,6 @@ spec:
 ```
 
 Replace:
-
 - `<route-name>`: Name for the route object
 - `<namespace>`: Your project namespace
 - `<app-name>`: Your application name
@@ -84,20 +78,20 @@ Replace:
 - `<port>`: Port number your service uses (e.g., 3000, 8080)
 
 #### Step 2: Create the new route
-
 ```bash
 oc create -f new-route.yaml
 ```
 
 #### Step 3: Test the new route
-
 Visit your new URL to confirm it works correctly
 
-#### Step 4: Delete the old route if no longer needed
-
+#### Step 4: Optionally delete the old route
+If you no longer need the old route, you can delete it:
 ```bash
 oc delete route <old-route-name> -n <namespace>
 ```
+
+**Note:** You can keep multiple routes active simultaneously. Each route can have a different hostname while pointing to the same service. This allows you to maintain both old and new URLs active during transitions.
 
 ### Example
 
@@ -116,7 +110,7 @@ metadata:
     app.kubernetes.io/name: upbeat
     app.kubernetes.io/part-of: learning-assistant
   annotations:
-    openshift.io/host.generated: "false"
+    openshift.io/host.generated: 'false'
 spec:
   host: learning-assistant.2.rahtiapp.fi
   to:
