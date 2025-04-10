@@ -1,15 +1,16 @@
+# Rahti notes
+
 1. build img: docker build -t upbeat .
 2. log in to Rahti 2 - Login command + docker login -u unused -p $(oc whoami -t) image-registry.apps.2.rahti.csc.fi
 3. Tag img: docker login -u unused -p $(oc whoami -t) image-registry.apps.2.rahti.csc.fi
 4. Push: docker push image-registry.apps.2.rahti.csc.fi/upbeat-apps/app-name:latest
-
 
 Frontend img:
 cd web
 docker tag upbeat image-registry.apps.2.rahti.csc.fi/upbeat-apps/upbeat:latest
 docker push image-registry.apps.2.rahti.csc.fi/upbeat-apps/upbeat:latest
 
-# Changing a Route Hostname in Rahti
+## Changing a Route Hostname in Rahti
 
 To change a hostname of an existing application in Rahti, you need to delete the old route and create a new one with your desired hostname. Follow these steps:
 
@@ -28,6 +29,7 @@ oc expose service <service-name> -n <namespace> --hostname=<custom-name>.2.rahti
 ```
 
 Replace:
+
 - `<service-name>` with the name of your service
 - `<namespace>` with your project name
 - `<custom-name>` with your desired hostname prefix
