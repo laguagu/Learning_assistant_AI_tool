@@ -311,7 +311,7 @@ export default function UserDashboard({
             {/* Main content area - adjust content based on active tab */}
             <div className="col-span-1 md:col-span-3">
               <TabsContent value="modules" className="m-0">
-                <ModuleSection userId={userId} />
+                <ModuleSection userId={userId} userEmail={userId} />
               </TabsContent>
 
               {/* Plan tab content commented out - no longer used

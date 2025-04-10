@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isModuleEnabled } from "@/lib/features";
-import { createClient } from "@/lib/supabase/client";
 import {
   markModuleAsComplete,
   markModuleAsUncomplete,
 } from "@/lib/supabase/actions";
+import { createClient } from "@/lib/supabase/client";
 import {
   ArrowRight,
   BookOpen,
@@ -61,9 +61,12 @@ const fetchCompletedModules = async (userId: string) => {
 };
 
 export function ModuleSection({ userId, userEmail }: ModuleSectionProps) {
+  console.log('userId', userId);
+  console.log('userEmail', userEmail);
+  
   const router = useRouter();
   // If userEmail is not provided, use a default value
-  const email = userEmail || "anil.tampere@example.com";
+  const email = userEmail || "no-user"
   const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
 
   // Use SWR for data fetching with automatic revalidation
