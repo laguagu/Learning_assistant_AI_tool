@@ -113,6 +113,7 @@ export default function UserDashboard({
                 src="/upbeat.jpg"
                 alt="Upbeat Logo"
                 fill
+                sizes="(max-width: 768px) 100vw, 288px"
                 style={{ objectFit: "contain" }}
                 priority
               />

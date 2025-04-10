@@ -28,6 +28,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://upbeat-upbeat-apps.2.rahtiapp.fi/'),
   title: "Learning Assistant AI Tool",
   description: "UPBEAT - learning assistant",
   openGraph: {
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
     description: "UPBEAT - learning assistant",
     images: [
       {
-        url: "/HH_logo_2020.png",
+        url: "/logo.png",
         width: 1200,
         height: 630,
         alt: "Learning Assistant AI Tool Logo",

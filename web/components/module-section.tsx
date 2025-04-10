@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import {
   markModuleAsComplete,
   markModuleAsUncomplete,
-} from "@/lib/supabase/queries";
+} from "@/lib/supabase/actions";
 import {
   ArrowRight,
   BookOpen,

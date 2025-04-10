@@ -1,3 +1,4 @@
+"use server";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -47,56 +48,5 @@ export async function markModuleAsUncomplete(userId: string, moduleId: string) {
   } catch (err) {
     console.error("Failed to remove module completion:", err);
     return { success: false, error: err };
-  }
-}
-
-/**
- * Get user's completed modules
- */
-export async function getCompletedModules(userId: string) {
-  try {
-    const supabase = await createClient();
-
-    const { data, error } = await supabase
-      .from("module_progress")
-      .select("module_id")
-      .eq("user_id", userId);
-
-    if (error) {
-      console.error("Error fetching module progress:", error);
-      return { completedModules: [], error };
-    }
-
-    return {
-      completedModules: data?.map((item) => item.module_id) || [],
-      error: null,
-    };
-  } catch (err) {
-    console.error("Failed to fetch completed modules:", err);
-    return { completedModules: [], error: err };
-  }
-}
-
-/**
- * Get current user from Supabase Auth
- */
-export async function getCurrentUser() {
-  try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error) {
-      console.error("Error getting user:", error);
-      return { user: null, error };
-    }
-
-    return { user, error: null };
-  } catch (err) {
-    console.error("Failed to get current user:", err);
-    return { user: null, error: err };
   }
 }

@@ -44,17 +44,20 @@ ENV NODE_ENV=production
 # Uncomment the following line in case you want to disable telemetry during runtime.
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# For better compatibility with Rahti/OpenShift which runs containers with arbitrary user IDs
+# Do not create a specific user, as it might not match the runtime UID
 
 COPY --from=builder /app/public ./public
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
-USER nextjs
+# Set permissions for OpenShift compatibility - allow any user to write to necessary directories
+RUN mkdir -p .next/cache .next/server && \
+    chmod -R 777 .next && \
+    chmod 777 /app
 
 EXPOSE 3000
 
