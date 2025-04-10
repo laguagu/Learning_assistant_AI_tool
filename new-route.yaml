@@ -1,0 +1,25 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: learning-assistant
+  namespace: upbeat-apps
+  labels:
+    app: upbeat
+    app.kubernetes.io/component: upbeat
+    app.kubernetes.io/instance: upbeat
+    app.kubernetes.io/name: upbeat
+    app.kubernetes.io/part-of: learning-assistant
+  annotations:
+    openshift.io/host.generated: 'false'
+spec:
+  host: upbeat.2.rahtiapp.fi
+  to:
+    kind: Service
+    name: upbeat
+    weight: 100
+  port:
+    targetPort: 3000-tcp
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
